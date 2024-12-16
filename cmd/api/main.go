@@ -16,7 +16,9 @@ const port = 8080
 type application struct {
 	DB       repository.DatabaseRepo
 	Services struct {
-		ProductServices repository.ProductRepo
+		ProductServices  repository.ProductRepo
+		CategoryServices repository.CategoryRepo
+		BrandServices    repository.BrandRepo
 	}
 	DSN    string
 	Domain string
@@ -44,6 +46,13 @@ func main() {
 	app.Services.ProductServices = &services.ProductServices{
 		PostgresDBRepo: &dbrepo.PostgresDBRepo{DB: conn},
 	}
+	app.Services.CategoryServices = &services.CategoryServices{
+		PostgresDBRepo: &dbrepo.PostgresDBRepo{DB: conn},
+	}
+	app.Services.BrandServices = &services.BrandServices{
+		PostgresDBRepo: &dbrepo.PostgresDBRepo{DB: conn},
+	}
+
 	defer app.DB.Connection().Close()
 
 	log.Println("Starting server on port", port)
