@@ -66,3 +66,77 @@ func (r *PostgresDBRepo) AllProducts() ([]*models.Product, error) {
 
 	return products, nil
 }
+
+func (r *PostgresDBRepo) AllCategories() ([]*models.Category, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `
+		SELECT id, name, description, image, image_key, created_at, updated_at FROM category;
+	`
+	rows, err := r.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []*models.Category
+
+	for rows.Next() {
+		var category models.Category
+		err := rows.Scan(
+			&category.ID,
+			&category.Name,
+			&category.Description,
+			&category.Image,
+			&category.ImageKey,
+			&category.CreatedAt,
+			&category.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		categories = append(categories, &category)
+	}
+
+	return categories, nil
+}
+
+func (r *PostgresDBRepo) AllBrands() ([]*models.Brand, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `
+		SELECT id, name, description, country, logo, logo_key, website_url, created_at, updated_at FROM brand;
+	`
+	rows, err := r.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var brands []*models.Brand
+
+	for rows.Next() {
+		var brand models.Brand
+		err := rows.Scan(
+			&brand.ID,
+			&brand.Name,
+			&brand.Description,
+			&brand.Country,
+			&brand.Logo,
+			&brand.LogoKey,
+			&brand.Website,
+			&brand.CreatedAt,
+			&brand.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		brands = append(brands, &brand)
+	}
+
+	return brands, nil
+}

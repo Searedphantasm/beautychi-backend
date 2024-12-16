@@ -5,15 +5,15 @@ import (
 	"github.com/PAPAvision-co/beautychi-backend.git/internals/repository/dbrepo"
 )
 
-type ProductServices struct {
+type BrandServices struct {
 	PostgresDBRepo *dbrepo.PostgresDBRepo
 }
 
-func (ps *ProductServices) AllProductsService() ([]*models.Product, error) {
-	products, err := ps.PostgresDBRepo.AllProducts()
+func (bs *BrandServices) AllBrandsService() ([]*models.Brand, error) {
+	brands, err := bs.PostgresDBRepo.AllBrands()
 	if err != nil {
 		return nil, err
 	}
 
-	return products, nil
+	return brands, nil
 }
