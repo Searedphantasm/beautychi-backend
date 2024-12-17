@@ -16,9 +16,10 @@ const port = 8080
 type application struct {
 	DB       repository.DatabaseRepo
 	Services struct {
-		ProductServices  repository.ProductRepo
-		CategoryServices repository.CategoryRepo
-		BrandServices    repository.BrandRepo
+		ProductServices     repository.ProductRepo
+		CategoryServices    repository.CategoryRepo
+		BrandServices       repository.BrandRepo
+		SubCategoryServices repository.SubCategoryRepo
 	}
 	DSN    string
 	Domain string
@@ -50,6 +51,9 @@ func main() {
 		PostgresDBRepo: &dbrepo.PostgresDBRepo{DB: conn},
 	}
 	app.Services.BrandServices = &services.BrandServices{
+		PostgresDBRepo: &dbrepo.PostgresDBRepo{DB: conn},
+	}
+	app.Services.SubCategoryServices = &services.SubCategoryServices{
 		PostgresDBRepo: &dbrepo.PostgresDBRepo{DB: conn},
 	}
 
