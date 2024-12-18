@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/PAPAvision-co/beautychi-backend.git/internals/models"
 	"github.com/PAPAvision-co/beautychi-backend.git/internals/repository/dbrepo"
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 type CategoryServices struct {
@@ -16,4 +17,29 @@ func (cs *CategoryServices) AllCategoryService() ([]*models.Category, error) {
 	}
 
 	return categories, nil
+}
+
+func (cs *CategoryServices) CreateCategoryService(category models.Category) error {
+	err := validation.ValidateStruct(&category,
+		validation.Field(&category.Name, validation.Required),
+
+		validation.Field(&category.Slug, validation.Required),
+
+		validation.Field(&category.Description, validation.Required),
+
+		validation.Field(&category.Image, validation.Required),
+
+		validation.Field(&category.ImageKey, validation.Required),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	err = cs.PostgresDBRepo.InsertCategory(category)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

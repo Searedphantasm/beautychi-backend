@@ -5,6 +5,7 @@ import "time"
 type Brand struct {
 	ID          int       `json:"id"`
 	Name        string    `json:"name"`
+	Slug        string    `json:"slug"`
 	Description string    `json:"description"`
 	Country     string    `json:"country"`
 	Logo        string    `json:"logo"`

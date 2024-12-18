@@ -11,11 +11,14 @@ func (app *application) routes() http.Handler {
 
 	// products route
 	mux.Get("/api/products", app.AllProductsHandler)
-	mux.Get("/api/products/{product_id}", app.OneProductHandler)
-
 	mux.Post("/api/products", app.CreateProductHandler)
 
+	mux.Get("/api/products/{product_id}", app.OneProductHandler)
+	mux.Put("/api/products/{product_id}", app.UpdateProductHandler)
+	mux.Delete("/api/products/{product_id}", app.DeleteProductHandler)
+
 	mux.Get("/api/categories", app.AllCategoriesHandler)
+	mux.Post("/api/categories", app.CreateCategoryHandler)
 
 	mux.Get("/api/brands", app.AllBrandsHandler)
 

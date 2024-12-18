@@ -7,24 +7,30 @@ import (
 
 type DatabaseRepo interface {
 	Connection() *sql.DB
-	AllProducts() ([]*models.Product, error)
-	AllCategories() ([]*models.Category, error)
 	AllBrands() ([]*models.Brand, error)
 	AllSubCategories() ([]*models.SubCategory, error)
 
+	AllCategories() ([]*models.Category, error)
+	InsertCategory(category models.Category) error
+
+	AllProducts(limit, offset int) ([]*models.Product, error)
 	ProductByID(id int) (*models.Product, error)
 	InsertProduct(product models.Product) error
+	UpdateProduct(product models.Product) error
 }
 
 type ProductRepo interface {
-	AllProductsService() ([]*models.Product, error)
+	AllProductsService(limit, offset int) ([]*models.Product, error)
 	OneProductServiceByProductID(productID int) (*models.Product, error)
 
 	InsertProductService(product models.Product) error
+	UpdateProductService(product models.Product) error
+	DeleteProductService(productID int) error
 }
 
 type CategoryRepo interface {
 	AllCategoryService() ([]*models.Category, error)
+	CreateCategoryService(category models.Category) error
 }
 
 type SubCategoryRepo interface {
