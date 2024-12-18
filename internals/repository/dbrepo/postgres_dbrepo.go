@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/PAPAvision-co/beautychi-backend.git/internals/models"
+	"reflect"
 	"time"
 )
 
@@ -18,15 +19,15 @@ func (r *PostgresDBRepo) Connection() *sql.DB {
 	return r.DB
 }
 
-func (r *PostgresDBRepo) AllProducts() ([]*models.Product, error) {
+func (r *PostgresDBRepo) AllProducts(limit, offset int) ([]*models.Product, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	query := `
-		SELECT p.id, title, slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, product_discount_price, sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id;
+		SELECT p.id, title, p.slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, coalesce(product_discount_price,0), sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id LIMIT $1 OFFSET $2;
 	`
 
-	rows, err := r.DB.QueryContext(ctx, query)
+	rows, err := r.DB.QueryContext(ctx, query, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -138,11 +139,101 @@ func (r *PostgresDBRepo) InsertProduct(product models.Product) error {
 	return nil
 }
 
+func (r *PostgresDBRepo) UpdateProduct(product models.Product) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	// getting existing product
+	transaction, err := r.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	var existingProduct models.Product
+
+	query := `SELECT id, title, slug, description, poster, poster_key, price, category_id, brand_id, product_stock, coalesce(product_discount_price,0), sub_category_id, consumer_guide, contact, status,created_at, updated_at FROM product WHERE id = $1;`
+
+	row := transaction.QueryRowContext(ctx, query, product.ID)
+	err = row.Scan(
+		&existingProduct.ID,
+		&existingProduct.Title,
+		&existingProduct.Slug,
+		&existingProduct.Description,
+		&existingProduct.Poster,
+		&existingProduct.PosterKey,
+		&existingProduct.Price,
+		&existingProduct.CategoryID,
+		&existingProduct.BrandID,
+		&existingProduct.ProductStock,
+		&existingProduct.ProductDiscountPrice,
+		&existingProduct.SubCategoryID,
+		&existingProduct.ConsumerGuide,
+		&existingProduct.Contact,
+		&existingProduct.Status,
+		&existingProduct.CreatedAt,
+		&existingProduct.UpdatedAt,
+	)
+
+	if err != nil {
+		transaction.Rollback()
+		return err
+	}
+	// product
+
+	dbValue := reflect.ValueOf(&existingProduct).Elem()
+	updateValue := reflect.ValueOf(&product).Elem()
+
+	for i := 0; i < dbValue.NumField(); i++ {
+		dbField := dbValue.Field(i)
+		updateField := updateValue.Field(i)
+
+		if updateField.IsValid() && dbField.CanSet() {
+			dbField.Set(updateField)
+		}
+	}
+
+	existingProduct.UpdatedAt = time.Now()
+
+	stmt := `UPDATE product SET title = $1, slug = $2, description = $3, poster = $4 , poster_key = $5, 
+                   price = $6 , category_id = $7 , brand_id = $8 , product_stock = $9, product_discount_price = $10 , sub_category_id = $11, consumer_guide = $12 , contact = $13 , status = $14 , updated_at = $15 WHERE id = $16;`
+
+	_, err = transaction.ExecContext(ctx, stmt,
+		existingProduct.Title,
+		existingProduct.Slug,
+		existingProduct.Description,
+		existingProduct.Poster,
+		existingProduct.PosterKey,
+		existingProduct.Price,
+		existingProduct.CategoryID,
+		existingProduct.BrandID,
+		existingProduct.ProductStock,
+		existingProduct.ProductDiscountPrice,
+		existingProduct.SubCategoryID,
+		existingProduct.ConsumerGuide,
+		existingProduct.Contact,
+		existingProduct.Status,
+		existingProduct.UpdatedAt,
+		existingProduct.ID,
+	)
+	if err != nil {
+		transaction.Rollback()
+		return errors.New("failed to update product ")
+	}
+
+	err = transaction.Commit()
+	if err != nil {
+		transaction.Rollback()
+		return errors.New("failed to commit update product transaction")
+	}
+
+	return nil
+}
+
 func (r *PostgresDBRepo) ProductByID(id int) (*models.Product, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `SELECT p.id, title, slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, product_discount_price, sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id WHERE p.id = $1;`
+	query := `SELECT p.id, title, p.slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, product_discount_price, sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id WHERE p.id = $1;`
 
 	row := r.DB.QueryRowContext(ctx, query, id)
 	var pro models.Product
@@ -228,12 +319,26 @@ func (r *PostgresDBRepo) ProductByID(id int) (*models.Product, error) {
 	return &pro, nil
 }
 
+func (r *PostgresDBRepo) DeleteProductByID(id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `DELETE FROM product WHERE id = $1;`
+
+	_, err := r.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *PostgresDBRepo) AllCategories() ([]*models.Category, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	query := `
-		SELECT id, name, description, image, image_key, created_at, updated_at FROM category;
+		SELECT id, name,slug, description, image, image_key, created_at, updated_at FROM category;
 	`
 	rows, err := r.DB.QueryContext(ctx, query)
 	if err != nil {
@@ -248,6 +353,7 @@ func (r *PostgresDBRepo) AllCategories() ([]*models.Category, error) {
 		err := rows.Scan(
 			&category.ID,
 			&category.Name,
+			&category.Slug,
 			&category.Description,
 			&category.Image,
 			&category.ImageKey,
@@ -264,12 +370,33 @@ func (r *PostgresDBRepo) AllCategories() ([]*models.Category, error) {
 	return categories, nil
 }
 
+func (r *PostgresDBRepo) InsertCategory(category models.Category) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `INSERT INTO category (name,slug, description, image, image_key) VALUES ($1,$2, $3, $4,$5);`
+
+	_, err := r.DB.ExecContext(ctx, stmt,
+		category.Name,
+		category.Slug,
+		category.Description,
+		category.Image,
+		category.ImageKey,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *PostgresDBRepo) AllBrands() ([]*models.Brand, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	query := `
-		SELECT id, name, description, country, logo, logo_key, website_url, created_at, updated_at FROM brand;
+		SELECT id, name,slug, description, country, logo, logo_key, website_url, created_at, updated_at FROM brand;
 	`
 	rows, err := r.DB.QueryContext(ctx, query)
 	if err != nil {
@@ -284,6 +411,7 @@ func (r *PostgresDBRepo) AllBrands() ([]*models.Brand, error) {
 		err := rows.Scan(
 			&brand.ID,
 			&brand.Name,
+			&brand.Slug,
 			&brand.Description,
 			&brand.Country,
 			&brand.Logo,
@@ -307,7 +435,7 @@ func (r *PostgresDBRepo) AllSubCategories() ([]*models.SubCategory, error) {
 	defer cancel()
 
 	query := `
-		SELECT id, parent_category_id, name, description, image, image_key, created_at, updated_at FROM sub_category;
+		SELECT id, parent_category_id, name,slug, description, image, image_key, created_at, updated_at FROM sub_category;
 	`
 
 	rows, err := r.DB.QueryContext(ctx, query)
@@ -323,6 +451,7 @@ func (r *PostgresDBRepo) AllSubCategories() ([]*models.SubCategory, error) {
 			&subCategory.ID,
 			&subCategory.ParentCategoryID,
 			&subCategory.Name,
+			&subCategory.Slug,
 			&subCategory.Description,
 			&subCategory.Image,
 			&subCategory.ImageKey,

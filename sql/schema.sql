@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS category
 (
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(255) NOT NULL,
+    slug                   VARCHAR(255) NOT NULL,
     description TEXT         NOT NULL,
     image       VARCHAR(255) NOT NULL,
     image_key   VARCHAR(255) NOT NULL,
@@ -14,6 +15,7 @@ CREATE TABLE IF NOT EXISTS sub_category
     id                 SERIAL PRIMARY KEY,
     parent_category_id INT REFERENCES category (id),
     name               VARCHAR(255) NOT NULL,
+    slug                   VARCHAR(255) NOT NULL,
     description        TEXT         NOT NULL,
     image              VARCHAR(255) NOT NULL,
     image_key          VARCHAR(255) NOT NULL,
@@ -25,6 +27,7 @@ CREATE TABLE IF NOT EXISTS brand
 (
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(255),
+    slug                   VARCHAR(255) NOT NULL,
     description TEXT,
     country     VARCHAR(100),
     logo        VARCHAR(255),
@@ -61,16 +64,15 @@ CREATE TABLE IF NOT EXISTS product
 CREATE TABLE IF NOT EXISTS product_specifications
 (
     id                SERIAL PRIMARY KEY,
-    product_id        INT REFERENCES product (id),
+    product_id        INT REFERENCES product (id) ON DELETE CASCADE ,
     specs_title       VARCHAR(255) NOT NULL,
-    specs_description VARCHAR(255) NOT NULL,
-    FOREIGN KEY (product_id) REFERENCES product (id) ON DELETE CASCADE
+    specs_description VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS product_image
 (
     id         SERIAL PRIMARY KEY,
-    product_id INT REFERENCES product (id),
+    product_id INT REFERENCES product (id) ON DELETE CASCADE ,
     url TEXT ,
     alt_text VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
