@@ -157,3 +157,53 @@ func (app *application) CreateCategoryHandler(w http.ResponseWriter, r *http.Req
 
 	_ = app.writeJSON(w, http.StatusCreated, category)
 }
+
+func (app *application) UpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	var category models.Category
+	err := app.readJSON(w, r, &category)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+	category.ID, err = strconv.Atoi(chi.URLParam(r, "category_id"))
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid category id"))
+		return
+	}
+
+	err = app.Services.CategoryServices.UpdateCategoryService(category)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, category)
+}
+
+// FIXME: DROP database and add image_key field and refactor database functions.
+
+func (app *application) UpdateProductImageHandler(w http.ResponseWriter, r *http.Request) {
+	product_id := chi.URLParam(r, "product_id")
+	productID, err := strconv.Atoi(product_id)
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid product id"))
+		return
+	}
+
+	var reqBody struct {
+		ProductImages []models.ProductImage `json:"product_images"`
+	}
+	err = app.readJSON(w, r, &reqBody)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = app.Services.ProductServices.UpdateProductImagesService(productID, reqBody.ProductImages)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, reqBody)
+}

@@ -43,3 +43,22 @@ func (cs *CategoryServices) CreateCategoryService(category models.Category) erro
 
 	return nil
 }
+
+func (cs *CategoryServices) UpdateCategoryService(category models.Category) error {
+	err := validation.ValidateStruct(&category,
+		validation.Field(&category.Name, validation.Required),
+		validation.Field(&category.Slug, validation.Required),
+		validation.Field(&category.Image, validation.Required),
+		validation.Field(&category.ImageKey, validation.Required),
+		validation.Field(&category.Description, validation.Required),
+	)
+	if err != nil {
+		return err
+	}
+
+	err = cs.PostgresDBRepo.UpdateCategoryByID(category)
+	if err != nil {
+		return err
+	}
+	return nil
+}
