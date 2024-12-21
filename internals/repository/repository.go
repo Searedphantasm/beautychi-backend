@@ -12,11 +12,13 @@ type DatabaseRepo interface {
 
 	AllCategories() ([]*models.Category, error)
 	InsertCategory(category models.Category) error
+	UpdateCategoryByID(category models.Category) error
 
 	AllProducts(limit, offset int) ([]*models.Product, error)
 	ProductByID(id int) (*models.Product, error)
 	InsertProduct(product models.Product) error
 	UpdateProduct(product models.Product) error
+	UpdateProductImages(productID int, productImages []models.ProductImage) error
 }
 
 type ProductRepo interface {
@@ -25,12 +27,14 @@ type ProductRepo interface {
 
 	InsertProductService(product models.Product) error
 	UpdateProductService(product models.Product) error
+	UpdateProductImagesService(productID int, productImages []models.ProductImage) error
 	DeleteProductService(productID int) error
 }
 
 type CategoryRepo interface {
 	AllCategoryService() ([]*models.Category, error)
 	CreateCategoryService(category models.Category) error
+	UpdateCategoryService(category models.Category) error
 }
 
 type SubCategoryRepo interface {

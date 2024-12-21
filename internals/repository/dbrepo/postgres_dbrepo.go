@@ -118,10 +118,11 @@ func (r *PostgresDBRepo) InsertProduct(product models.Product) error {
 	}
 
 	for _, pi := range product.ProductImages {
-		stmt = `INSERT INTO product_image (product_id, url,alt_text) VALUES ($1,$2,$3)`
+		stmt = `INSERT INTO product_image (product_id, url,url_key,alt_text) VALUES ($1,$2,$3,$4)`
 		_, err := transaction.ExecContext(ctx, stmt,
 			newProductID,
 			pi.Url,
+			pi.UrlKey,
 			pi.AltText,
 		)
 		if err != nil {
@@ -229,6 +230,54 @@ func (r *PostgresDBRepo) UpdateProduct(product models.Product) error {
 	return nil
 }
 
+func (r *PostgresDBRepo) UpdateProductImages(productID int, productImages []models.ProductImage) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	transaction, err := r.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	query := `SELECT id, title FROM product WHERE id = $1;`
+
+	var checkProduct struct {
+		Id    int
+		Title string
+	}
+
+	err = transaction.QueryRowContext(ctx, query, productID).Scan(
+		&checkProduct.Id,
+		&checkProduct.Title,
+	)
+	if err != nil {
+		transaction.Rollback()
+		return err
+	}
+
+	for _, pi := range productImages {
+		stmt := `INSERT INTO product_image (product_id, url,url_key,alt_text) VALUES ($1,$2,$3,$4)`
+		_, err := transaction.ExecContext(ctx, stmt,
+			productID,
+			pi.Url,
+			pi.UrlKey,
+			pi.AltText,
+		)
+		if err != nil {
+			transaction.Rollback()
+			return errors.New("failed to insert product images")
+		}
+	}
+
+	err = transaction.Commit()
+	if err != nil {
+		transaction.Rollback()
+		return errors.New("failed to commit transaction")
+	}
+
+	return nil
+}
+
 func (r *PostgresDBRepo) ProductByID(id int) (*models.Product, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
@@ -288,7 +337,7 @@ func (r *PostgresDBRepo) ProductByID(id int) (*models.Product, error) {
 		productSpecs = append(productSpecs, &productSpec)
 	}
 
-	query = `SELECT id, product_id, url, alt_text, created_at FROM product_image WHERE product_id = $1;`
+	query = `SELECT id, product_id, url,url_key, alt_text, created_at FROM product_image WHERE product_id = $1;`
 	rows, err = r.DB.QueryContext(ctx, query, id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
@@ -303,6 +352,7 @@ func (r *PostgresDBRepo) ProductByID(id int) (*models.Product, error) {
 			&proImage.ID,
 			&proImage.ProductID,
 			&proImage.Url,
+			&proImage.UrlKey,
 			&proImage.AltText,
 			&proImage.CreatedAt,
 		)
@@ -466,4 +516,60 @@ func (r *PostgresDBRepo) AllSubCategories() ([]*models.SubCategory, error) {
 	}
 
 	return subCategories, nil
+}
+
+func (r *PostgresDBRepo) UpdateCategoryByID(category models.Category) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	// check if the category exists
+	var existingCategory models.Category
+
+	query := `SELECT id, name, slug, description, image, image_key, created_at, updated_at FROM category WHERE id = $1;`
+
+	row := r.DB.QueryRowContext(ctx, query, category.ID)
+	err := row.Scan(
+		&existingCategory.ID,
+		&existingCategory.Name,
+		&existingCategory.Slug,
+		&existingCategory.Description,
+		&existingCategory.Image,
+		&existingCategory.ImageKey,
+		&existingCategory.CreatedAt,
+		&existingCategory.UpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	dbValue := reflect.ValueOf(&existingCategory).Elem()
+	updateValue := reflect.ValueOf(&category).Elem()
+
+	for i := 0; i < dbValue.NumField(); i++ {
+		dbField := dbValue.Field(i)
+		updateField := updateValue.Field(i)
+
+		if updateField.IsValid() && dbField.CanSet() {
+			dbField.Set(updateField)
+		}
+	}
+
+	existingCategory.UpdatedAt = time.Now()
+
+	stmt := `UPDATE category SET name = $1, slug = $2, description = $3 , image = $4, image_key = $5, updated_at = $6 WHERE id = $7;`
+
+	_, err = r.DB.ExecContext(ctx, stmt,
+		existingCategory.Name,
+		existingCategory.Slug,
+		existingCategory.Description,
+		existingCategory.Image,
+		existingCategory.ImageKey,
+		existingCategory.UpdatedAt,
+		existingCategory.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

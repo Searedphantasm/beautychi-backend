@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS category
     name        VARCHAR(255) NOT NULL,
     slug                   VARCHAR(255) NOT NULL,
     description TEXT         NOT NULL,
-    image       VARCHAR(255) NOT NULL,
+    image       TEXT NOT NULL,
     image_key   VARCHAR(255) NOT NULL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -13,11 +13,11 @@ CREATE TABLE IF NOT EXISTS category
 CREATE TABLE IF NOT EXISTS sub_category
 (
     id                 SERIAL PRIMARY KEY,
-    parent_category_id INT REFERENCES category (id),
+    parent_category_id INT REFERENCES category (id) ON DELETE RESTRICT ,
     name               VARCHAR(255) NOT NULL,
     slug                   VARCHAR(255) NOT NULL,
     description        TEXT         NOT NULL,
-    image              VARCHAR(255) NOT NULL,
+    image              TEXT NOT NULL,
     image_key          VARCHAR(255) NOT NULL,
     created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS brand
     slug                   VARCHAR(255) NOT NULL,
     description TEXT,
     country     VARCHAR(100),
-    logo        VARCHAR(255),
+    logo        TEXT,
     logo_key    VARCHAR(255),
     website_url VARCHAR(255),
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -45,14 +45,14 @@ CREATE TABLE IF NOT EXISTS product
     title                  VARCHAR(255) NOT NULL,
     slug                   VARCHAR(255) NOT NULL,
     description            TEXT,
-    poster                 VARCHAR(255) NOT NULL,
+    poster                 TEXT NOT NULL,
     poster_key             VARCHAR(255) NOT NULL,
     price                  INT          NOT NULL,
-    category_id            INT REFERENCES category (id),
-    brand_id               INT REFERENCES brand (id),
+    category_id            INT REFERENCES category (id) ON DELETE RESTRICT ,
+    brand_id               INT REFERENCES brand (id) ON DELETE RESTRICT ,
     product_stock          INT          NOT NULL,
     product_discount_price INT,
-    sub_category_id        INT REFERENCES sub_category (id),
+    sub_category_id        INT REFERENCES sub_category (id) ON DELETE RESTRICT ,
     consumer_guide         TEXT,
     contact                VARCHAR(11),
     status                 product_status,
@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS product_image
     id         SERIAL PRIMARY KEY,
     product_id INT REFERENCES product (id) ON DELETE CASCADE ,
     url TEXT ,
+    url_key VARCHAR(255),
     alt_text VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )

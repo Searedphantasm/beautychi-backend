@@ -128,3 +128,23 @@ func (ps *ProductServices) UpdateProductService(product models.Product) error {
 
 	return nil
 }
+
+func (ps *ProductServices) UpdateProductImagesService(productID int, productImages []models.ProductImage) error {
+	for _, productImage := range productImages {
+		err := validation.ValidateStruct(&productImage,
+			validation.Field(&productImage.ProductID, validation.Required, validation.Min(0)),
+			validation.Field(&productImage.Url, validation.Required, validation.Length(1, 255)),
+			validation.Field(&productImage.AltText, validation.Required, validation.Length(1, 255)),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := ps.PostgresDBRepo.UpdateProductImages(productID, productImages)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
