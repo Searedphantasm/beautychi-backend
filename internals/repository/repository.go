@@ -7,18 +7,25 @@ import (
 
 type DatabaseRepo interface {
 	Connection() *sql.DB
-	AllBrands() ([]*models.Brand, error)
 	AllSubCategories() ([]*models.SubCategory, error)
 
 	AllCategories() ([]*models.Category, error)
 	InsertCategory(category models.Category) error
 	UpdateCategoryByID(category models.Category) error
+	DeleteCategoryByID(categoryID int) error
+	GetCategoryByID(id int) (*models.Category, error)
 
 	AllProducts(limit, offset int) ([]*models.Product, error)
 	ProductByID(id int) (*models.Product, error)
 	InsertProduct(product models.Product) error
 	UpdateProduct(product models.Product) error
 	UpdateProductImages(productID int, productImages []models.ProductImage) error
+
+	AllBrands() ([]*models.Brand, error)
+	InsertBrand(brand models.Brand) error
+	DeleteBrandByID(brandID int) error
+	GetOneBrandByID(brandID int) (*models.Brand, error)
+	UpdateBrand(brand models.Brand) error
 }
 
 type ProductRepo interface {
@@ -35,6 +42,9 @@ type CategoryRepo interface {
 	AllCategoryService() ([]*models.Category, error)
 	CreateCategoryService(category models.Category) error
 	UpdateCategoryService(category models.Category) error
+
+	GetCategoryByIDService(categoryID int) (*models.Category, error)
+	DeleteCategoryService(categoryID int) error
 }
 
 type SubCategoryRepo interface {
@@ -43,4 +53,7 @@ type SubCategoryRepo interface {
 
 type BrandRepo interface {
 	AllBrandsService() ([]*models.Brand, error)
+	DeleteBrandService(brandID int) error
+	CreateBrandService(brand models.Brand) error
+	UpdateBrandService(brand models.Brand) error
 }
