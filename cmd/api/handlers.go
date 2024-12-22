@@ -207,3 +207,115 @@ func (app *application) UpdateProductImageHandler(w http.ResponseWriter, r *http
 
 	_ = app.writeJSON(w, http.StatusOK, reqBody)
 }
+
+func (app *application) OneCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	category_id := chi.URLParam(r, "category_id")
+	categoryID, err := strconv.Atoi(category_id)
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid category id"))
+		return
+	}
+
+	category, err := app.DB.GetCategoryByID(categoryID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, category)
+}
+
+func (app *application) DeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	category_id := chi.URLParam(r, "category_id")
+	categoryID, err := strconv.Atoi(category_id)
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid category id"))
+		return
+	}
+
+	err = app.Services.CategoryServices.DeleteCategoryService(categoryID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, map[string]string{"result": "success"})
+}
+
+func (app *application) CreateBrandHandler(w http.ResponseWriter, r *http.Request) {
+
+	var brand models.Brand
+	err := app.readJSON(w, r, &brand)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = app.Services.BrandServices.CreateBrandService(brand)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusCreated, brand)
+}
+
+func (app *application) DeleteBrandHandler(w http.ResponseWriter, r *http.Request) {
+	brand_id := chi.URLParam(r, "brand_id")
+	brandID, err := strconv.Atoi(brand_id)
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid brand id"))
+		return
+	}
+
+	err = app.Services.BrandServices.DeleteBrandService(brandID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, map[string]string{"result": "success"})
+}
+
+func (app *application) OneBrandHandler(w http.ResponseWriter, r *http.Request) {
+	brand_id := chi.URLParam(r, "brand_id")
+	brandID, err := strconv.Atoi(brand_id)
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid brand id"))
+		return
+	}
+
+	brand, err := app.DB.GetOneBrandByID(brandID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusOK, brand)
+}
+
+func (app *application) UpdateBrandHandler(w http.ResponseWriter, r *http.Request) {
+	brand_id := chi.URLParam(r, "brand_id")
+	brandID, err := strconv.Atoi(brand_id)
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid brand id"))
+		return
+	}
+
+	var brand models.Brand
+	err = app.readJSON(w, r, &brand)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	brand.ID = brandID
+
+	err = app.Services.BrandServices.UpdateBrandService(brand)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, brand)
+}

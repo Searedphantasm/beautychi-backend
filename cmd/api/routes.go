@@ -21,8 +21,14 @@ func (app *application) routes() http.Handler {
 	mux.Get("/api/categories", app.AllCategoriesHandler)
 	mux.Post("/api/categories", app.CreateCategoryHandler)
 	mux.Put("/api/categories/{category_id}", app.UpdateCategoryHandler)
+	mux.Get("/api/categories/{category_id}", app.OneCategoryHandler)
+	mux.Delete("/api/categories/{category_id}", app.DeleteCategoryHandler)
 
 	mux.Get("/api/brands", app.AllBrandsHandler)
+	mux.Post("/api/brands", app.CreateBrandHandler)
+	mux.Get("/api/brands/{brand_id}", app.OneBrandHandler)
+	mux.Delete("/api/brands/{brand_id}", app.DeleteBrandHandler)
+	mux.Put("/api/brands/{brand_id}", app.UpdateBrandHandler)
 
 	mux.Get("/api/sub-categories", app.AllSubCategoriesHandler)
 

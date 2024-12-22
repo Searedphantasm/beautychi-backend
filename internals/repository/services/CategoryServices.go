@@ -62,3 +62,21 @@ func (cs *CategoryServices) UpdateCategoryService(category models.Category) erro
 	}
 	return nil
 }
+
+func (cs *CategoryServices) DeleteCategoryService(categoryID int) error {
+	err := cs.PostgresDBRepo.DeleteCategoryByID(categoryID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cs *CategoryServices) GetCategoryByIDService(categoryID int) (*models.Category, error) {
+	category, err := cs.PostgresDBRepo.GetCategoryByID(categoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	return category, nil
+}

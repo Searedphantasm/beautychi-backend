@@ -480,6 +480,124 @@ func (r *PostgresDBRepo) AllBrands() ([]*models.Brand, error) {
 	return brands, nil
 }
 
+func (r *PostgresDBRepo) InsertBrand(brand models.Brand) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `INSERT INTO brand (name, slug, description, country, logo, logo_key, website_url) VALUES ($1,$2,$3,$4,$5,$6,$7);`
+	_, err := r.DB.ExecContext(ctx, stmt,
+		brand.Name,
+		brand.Slug,
+		brand.Description,
+		brand.Country,
+		brand.Logo,
+		brand.LogoKey,
+		brand.Website,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *PostgresDBRepo) GetOneBrandByID(brandID int) (*models.Brand, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	var brand models.Brand
+
+	query := `SELECT id, name, slug, description, country, logo, logo_key, website_url, created_at, updated_at FROM brand where id = $1;`
+
+	err := r.DB.QueryRowContext(ctx, query, brandID).Scan(
+		&brand.ID,
+		&brand.Name,
+		&brand.Slug,
+		&brand.Description,
+		&brand.Country,
+		&brand.Logo,
+		&brand.LogoKey,
+		&brand.Website,
+		&brand.CreatedAt,
+		&brand.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &brand, nil
+}
+
+func (r *PostgresDBRepo) DeleteBrandByID(brandID int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	// check if brand exists
+	existing, err := r.GetOneBrandByID(brandID)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return nil
+	}
+
+	query := `DELETE FROM brand WHERE id = $1;`
+	_, err = r.DB.ExecContext(ctx, query, brandID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *PostgresDBRepo) UpdateBrand(brand models.Brand) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	existingBrand, err := r.GetOneBrandByID(brand.ID)
+	if err != nil {
+		return err
+	}
+
+	if existingBrand == nil {
+		return nil
+	}
+
+	dbValue := reflect.ValueOf(existingBrand).Elem()
+	updateValue := reflect.ValueOf(&brand).Elem()
+
+	for i := 0; i < dbValue.NumField(); i++ {
+		dbField := dbValue.Field(i)
+		updateField := updateValue.Field(i)
+
+		if updateField.IsValid() && dbField.CanSet() {
+			dbField.Set(updateField)
+		}
+	}
+
+	existingBrand.UpdatedAt = time.Now()
+
+	stmt := `UPDATE brand SET name = $1, slug = $2, description = $3 , logo = $4, logo_key = $5, updated_at = $6,country = $7,website_url = $8 WHERE id = $9;`
+
+	_, err = r.DB.ExecContext(ctx, stmt,
+		existingBrand.Name,
+		existingBrand.Slug,
+		existingBrand.Description,
+		existingBrand.Logo,
+		existingBrand.LogoKey,
+		existingBrand.UpdatedAt,
+		existingBrand.Country,
+		existingBrand.Website,
+		existingBrand.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (r *PostgresDBRepo) AllSubCategories() ([]*models.SubCategory, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
@@ -567,6 +685,56 @@ func (r *PostgresDBRepo) UpdateCategoryByID(category models.Category) error {
 		existingCategory.UpdatedAt,
 		existingCategory.ID,
 	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *PostgresDBRepo) GetCategoryByID(id int) (*models.Category, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	var category models.Category
+	query := `SELECT id, name, slug, description, image, image_key, created_at, updated_at FROM category WHERE id = $1;`
+
+	row := r.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&category.ID,
+		&category.Name,
+		&category.Slug,
+		&category.Description,
+		&category.Image,
+		&category.ImageKey,
+		&category.CreatedAt,
+		&category.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &category, nil
+}
+
+func (r *PostgresDBRepo) DeleteCategoryByID(categoryID int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	// check if category exists
+	exsitingCategory, err := r.GetCategoryByID(categoryID)
+	if err != nil {
+		return err
+	}
+
+	if exsitingCategory.ID == 0 {
+		return errors.New("category does not exist")
+	}
+
+	query := `DELETE FROM category WHERE id = $1;`
+
+	_, err = r.DB.ExecContext(ctx, query, categoryID)
 	if err != nil {
 		return err
 	}
