@@ -7,7 +7,12 @@ import (
 
 type DatabaseRepo interface {
 	Connection() *sql.DB
+
 	AllSubCategories() ([]*models.SubCategory, error)
+	UpdateSubCategory(subCategory models.SubCategory) error
+	GetSubCategoryByID(subCategoryID int) (*models.SubCategory, error)
+	DeleteSubCategoryByID(subCategoryID int) error
+	InsertSubCategory(subCategory models.SubCategory) error
 
 	AllCategories() ([]*models.Category, error)
 	InsertCategory(category models.Category) error
@@ -24,7 +29,7 @@ type DatabaseRepo interface {
 	AllBrands() ([]*models.Brand, error)
 	InsertBrand(brand models.Brand) error
 	DeleteBrandByID(brandID int) error
-	GetOneBrandByID(brandID int) (*models.Brand, error)
+	GetBrandByID(brandID int) (*models.Brand, error)
 	UpdateBrand(brand models.Brand) error
 }
 
@@ -49,6 +54,9 @@ type CategoryRepo interface {
 
 type SubCategoryRepo interface {
 	AllSubCategoryService() ([]*models.SubCategory, error)
+	InsertSubCategoryService(subCategory models.SubCategory) error
+	UpdateSubCategoryService(subCategory models.SubCategory) error
+	DeleteSubCategoryService(subCategoryID int) error
 }
 
 type BrandRepo interface {
@@ -56,4 +64,5 @@ type BrandRepo interface {
 	DeleteBrandService(brandID int) error
 	CreateBrandService(brand models.Brand) error
 	UpdateBrandService(brand models.Brand) error
+	GetBrandService(brandID int) (*models.Brand, error)
 }

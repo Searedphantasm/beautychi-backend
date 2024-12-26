@@ -69,3 +69,12 @@ func (bs *BrandServices) UpdateBrandService(brand models.Brand) error {
 
 	return nil
 }
+
+func (bs *BrandServices) GetBrandService(brandID int) (*models.Brand, error) {
+	brand, err := bs.PostgresDBRepo.GetBrandByID(brandID)
+	if err != nil {
+		return nil, err
+	}
+
+	return brand, nil
+}

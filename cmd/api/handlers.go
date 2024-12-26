@@ -64,6 +64,65 @@ func (app *application) AllSubCategoriesHandler(w http.ResponseWriter, r *http.R
 	_ = app.writeJSON(w, http.StatusOK, subCategories)
 }
 
+func (app *application) CreateSubCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	var subCategory models.SubCategory
+
+	err := app.readJSON(w, r, &subCategory)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = app.Services.SubCategoryServices.InsertSubCategoryService(subCategory)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusCreated, subCategory)
+}
+
+func (app *application) UpdateSubCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	var subCategory models.SubCategory
+
+	err := app.readJSON(w, r, &subCategory)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	subCategory.ID, err = strconv.Atoi(chi.URLParam(r, "sub_category_id"))
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid sub category id"))
+		return
+	}
+
+	err = app.Services.SubCategoryServices.UpdateSubCategoryService(subCategory)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, subCategory)
+}
+
+func (app *application) DeleteSubCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	sub_category_id := chi.URLParam(r, "sub_category_id")
+	subCategoryID, err := strconv.Atoi(sub_category_id)
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid sub category id"))
+		return
+	}
+
+	err = app.Services.SubCategoryServices.DeleteSubCategoryService(subCategoryID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, map[string]string{"result": "success"})
+}
+
 func (app *application) OneProductHandler(w http.ResponseWriter, r *http.Request) {
 	product_id := chi.URLParam(r, "product_id")
 	productID, err := strconv.Atoi(product_id)
@@ -285,13 +344,13 @@ func (app *application) OneBrandHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	brand, err := app.DB.GetOneBrandByID(brandID)
+	brand, err := app.Services.BrandServices.GetBrandService(brandID)
 	if err != nil {
 		app.errorJSON(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, brand)
+	_ = app.writeJSON(w, http.StatusOK, brand)
 }
 
 func (app *application) UpdateBrandHandler(w http.ResponseWriter, r *http.Request) {
