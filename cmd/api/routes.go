@@ -17,6 +17,8 @@ func (app *application) routes() http.Handler {
 	mux.Put("/api/products/{product_id}", app.UpdateProductHandler)
 	mux.Put("/api/products/{product_id}/product-images", app.UpdateProductImageHandler)
 	mux.Delete("/api/products/{product_id}", app.DeleteProductHandler)
+	// TODO: Create endpoint for deleting single productImage.
+	//mux.Delete("/api/products/{product_id}", app.DeleteProductImageHandler)
 
 	mux.Get("/api/categories", app.AllCategoriesHandler)
 	mux.Post("/api/categories", app.CreateCategoryHandler)
@@ -31,6 +33,9 @@ func (app *application) routes() http.Handler {
 	mux.Put("/api/brands/{brand_id}", app.UpdateBrandHandler)
 
 	mux.Get("/api/sub-categories", app.AllSubCategoriesHandler)
+	mux.Post("/api/sub-categories", app.CreateSubCategoryHandler)
+	mux.Put("/api/sub-categories/{sub_category_id}", app.UpdateSubCategoryHandler)
+	mux.Delete("/api/sub-categories/{sub_category_id}", app.DeleteSubCategoryHandler)
 
 	return mux
 }

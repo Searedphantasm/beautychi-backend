@@ -501,39 +501,12 @@ func (r *PostgresDBRepo) InsertBrand(brand models.Brand) error {
 	return nil
 }
 
-func (r *PostgresDBRepo) GetOneBrandByID(brandID int) (*models.Brand, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
-	defer cancel()
-
-	var brand models.Brand
-
-	query := `SELECT id, name, slug, description, country, logo, logo_key, website_url, created_at, updated_at FROM brand where id = $1;`
-
-	err := r.DB.QueryRowContext(ctx, query, brandID).Scan(
-		&brand.ID,
-		&brand.Name,
-		&brand.Slug,
-		&brand.Description,
-		&brand.Country,
-		&brand.Logo,
-		&brand.LogoKey,
-		&brand.Website,
-		&brand.CreatedAt,
-		&brand.UpdatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &brand, nil
-}
-
 func (r *PostgresDBRepo) DeleteBrandByID(brandID int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	// check if brand exists
-	existing, err := r.GetOneBrandByID(brandID)
+	existing, err := r.GetBrandByID(brandID)
 	if err != nil {
 		return err
 	}
@@ -554,7 +527,7 @@ func (r *PostgresDBRepo) UpdateBrand(brand models.Brand) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	existingBrand, err := r.GetOneBrandByID(brand.ID)
+	existingBrand, err := r.GetBrandByID(brand.ID)
 	if err != nil {
 		return err
 	}
@@ -598,13 +571,39 @@ func (r *PostgresDBRepo) UpdateBrand(brand models.Brand) error {
 
 }
 
+func (r *PostgresDBRepo) GetBrandByID(brandID int) (*models.Brand, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	var brand models.Brand
+
+	query := `SELECT id, name, slug, description, country, logo, logo_key, website_url, created_at, updated_at FROM brand WHERE id = $1;`
+
+	err := r.DB.QueryRowContext(ctx, query, brandID).Scan(
+		&brand.ID,
+		&brand.Name,
+		&brand.Slug,
+		&brand.Description,
+		&brand.Country,
+		&brand.Logo,
+		&brand.LogoKey,
+		&brand.Website,
+		&brand.CreatedAt,
+		&brand.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &brand, nil
+}
+
 func (r *PostgresDBRepo) AllSubCategories() ([]*models.SubCategory, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	query := `
-		SELECT id, parent_category_id, name,slug, description, image, image_key, created_at, updated_at FROM sub_category;
-	`
+		SELECT sc.id, parent_category_id,c.name as parent_category_name, sc.name,sc.slug, sc.description, sc.image, sc.image_key, sc.created_at, sc.updated_at FROM sub_category sc JOIN category c on sc.parent_category_id = c.id;`
 
 	rows, err := r.DB.QueryContext(ctx, query)
 	if err != nil {
@@ -618,6 +617,153 @@ func (r *PostgresDBRepo) AllSubCategories() ([]*models.SubCategory, error) {
 		err := rows.Scan(
 			&subCategory.ID,
 			&subCategory.ParentCategoryID,
+			&subCategory.ParentCategoryName,
+			&subCategory.Name,
+			&subCategory.Slug,
+			&subCategory.Description,
+			&subCategory.Image,
+			&subCategory.ImageKey,
+			&subCategory.CreatedAt,
+			&subCategory.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		subCategories = append(subCategories, &subCategory)
+	}
+
+	return subCategories, nil
+}
+
+func (r *PostgresDBRepo) InsertSubCategory(subCategory models.SubCategory) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `INSERT INTO sub_category (parent_category_id, name, slug, description, image, image_key) VALUES ($1, $2, $3, $4, $5, $6);`
+	_, err := r.DB.ExecContext(ctx, stmt,
+		subCategory.ParentCategoryID,
+		subCategory.Name,
+		subCategory.Slug,
+		subCategory.Description,
+		subCategory.Image,
+		subCategory.ImageKey,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *PostgresDBRepo) DeleteSubCategoryByID(subCategoryID int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `DELETE FROM sub_category WHERE id = $1;`
+	_, err := r.DB.ExecContext(ctx, stmt, subCategoryID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *PostgresDBRepo) GetSubCategoryByID(subCategoryID int) (*models.SubCategory, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	var subCategory models.SubCategory
+
+	query := `
+		SELECT sc.id, parent_category_id,c.name as parent_category_name, sc.name,sc.slug, sc.description, sc.image, sc.image_key, sc.created_at, sc.updated_at FROM sub_category sc JOIN category c on sc.parent_category_id = c.id WHERE sc.id = $1;`
+
+	err := r.DB.QueryRowContext(ctx, query, subCategoryID).Scan(
+		&subCategory.ID,
+		&subCategory.ParentCategoryID,
+		&subCategory.ParentCategoryName,
+		&subCategory.Name,
+		&subCategory.Slug,
+		&subCategory.Description,
+		&subCategory.Image,
+		&subCategory.ImageKey,
+		&subCategory.CreatedAt,
+		&subCategory.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &subCategory, nil
+}
+
+func (r *PostgresDBRepo) UpdateSubCategory(subCategory models.SubCategory) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	// get existing subcategory
+	existingSubCategory, err := r.GetSubCategoryByID(subCategory.ID)
+	if err != nil {
+		return err
+	}
+
+	if existingSubCategory == nil {
+		return nil
+	}
+
+	dbValue := reflect.ValueOf(existingSubCategory).Elem()
+	updateValue := reflect.ValueOf(&subCategory).Elem()
+
+	for i := 0; i < dbValue.NumField(); i++ {
+		dbField := dbValue.Field(i)
+		updateField := updateValue.Field(i)
+
+		if updateField.IsValid() && dbField.CanSet() {
+			dbField.Set(updateField)
+		}
+	}
+
+	existingSubCategory.UpdatedAt = time.Now()
+
+	stmt := `UPDATE sub_category SET name = $1,slug = $2, description = $3, image = $4 , image_key = $5, parent_category_id = $6 WHERE id = $7;`
+
+	_, err = r.DB.ExecContext(ctx, stmt,
+		existingSubCategory.Name,
+		existingSubCategory.Slug,
+		existingSubCategory.Description,
+		existingSubCategory.Image,
+		existingSubCategory.ImageKey,
+		existingSubCategory.ParentCategoryID,
+		existingSubCategory.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// AllSubCategoriesByParentCategoryID gets all subcategories by parent_category_id
+func (r *PostgresDBRepo) AllSubCategoriesByParentCategoryID(parentCategoryID int) ([]*models.SubCategory, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `
+		SELECT sc.id, parent_category_id,c.name as parent_category_name, sc.name,sc.slug, sc.description, sc.image, sc.image_key, sc.created_at, sc.updated_at FROM sub_category sc JOIN category c on sc.parent_category_id = c.id WHERE parent_category_id = $1;`
+
+	rows, err := r.DB.QueryContext(ctx, query, parentCategoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var subCategories []*models.SubCategory
+	for rows.Next() {
+		var subCategory models.SubCategory
+		err := rows.Scan(
+			&subCategory.ID,
+			&subCategory.ParentCategoryID,
+			&subCategory.ParentCategoryName,
 			&subCategory.Name,
 			&subCategory.Slug,
 			&subCategory.Description,

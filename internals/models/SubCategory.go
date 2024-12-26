@@ -3,10 +3,10 @@ package models
 import "time"
 
 type SubCategory struct {
-	ID                 int64     `json:"id"`
+	ID                 int       `json:"id"`
 	Name               string    `json:"name"`
 	Slug               string    `json:"slug"`
-	ParentCategoryID   int64     `json:"parent_category_id"`
+	ParentCategoryID   int       `json:"parent_category_id"`
 	ParentCategoryName string    `json:"parent_category_name,omitempty"`
 	Description        string    `json:"description"`
 	Image              string    `json:"image"`
