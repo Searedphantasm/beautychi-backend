@@ -70,8 +70,14 @@ func (bs *BrandServices) UpdateBrandService(brand models.Brand) error {
 	return nil
 }
 
-func (bs *BrandServices) GetBrandService(brandID int) (*models.Brand, error) {
-	brand, err := bs.PostgresDBRepo.GetBrandByID(brandID)
+func (bs *BrandServices) GetBrandServiceByIDOrSlug(brandID int, brandSlug string) (*models.Brand, error) {
+
+	params := models.OneParams{
+		ID:   brandID,
+		Slug: brandSlug,
+	}
+
+	brand, err := bs.PostgresDBRepo.GetBrandByIDOrSlug(params)
 	if err != nil {
 		return nil, err
 	}

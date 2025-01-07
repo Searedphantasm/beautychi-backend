@@ -278,13 +278,27 @@ func (r *PostgresDBRepo) UpdateProductImages(productID int, productImages []mode
 	return nil
 }
 
-func (r *PostgresDBRepo) ProductByID(id int) (*models.Product, error) {
+func (r *PostgresDBRepo) ProductByIDOrSlug(params models.OneParams) (*models.Product, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `SELECT p.id, title, p.slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, product_discount_price, sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id WHERE p.id = $1;`
+	id := params.ID
+	slug := params.Slug
+	var query string
+	var identifier any
 
-	row := r.DB.QueryRowContext(ctx, query, id)
+	if id == 0 && len(slug) > 0 {
+		query = `SELECT p.id, title, p.slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, product_discount_price, sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id WHERE p.slug = $1;`
+
+		identifier = slug
+	} else if id != 0 {
+		query = `SELECT p.id, title, p.slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, product_discount_price, sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id WHERE p.id = $1;`
+
+		identifier = id
+	}
+
+	row := r.DB.QueryRowContext(ctx, query, identifier)
+
 	var pro models.Product
 	err := row.Scan(
 		&pro.ID,
@@ -314,7 +328,7 @@ func (r *PostgresDBRepo) ProductByID(id int) (*models.Product, error) {
 	}
 
 	query = `SELECT id, product_id, specs_title, specs_description FROM product_specifications WHERE product_id = $1;`
-	rows, err := r.DB.QueryContext(ctx, query, id)
+	rows, err := r.DB.QueryContext(ctx, query, pro.ID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
@@ -338,7 +352,7 @@ func (r *PostgresDBRepo) ProductByID(id int) (*models.Product, error) {
 	}
 
 	query = `SELECT id, product_id, url,url_key, alt_text, created_at FROM product_image WHERE product_id = $1;`
-	rows, err = r.DB.QueryContext(ctx, query, id)
+	rows, err = r.DB.QueryContext(ctx, query, pro.ID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
@@ -506,7 +520,11 @@ func (r *PostgresDBRepo) DeleteBrandByID(brandID int) error {
 	defer cancel()
 
 	// check if brand exists
-	existing, err := r.GetBrandByID(brandID)
+	params := models.OneParams{
+		ID:   brandID,
+		Slug: "",
+	}
+	existing, err := r.GetBrandByIDOrSlug(params)
 	if err != nil {
 		return err
 	}
@@ -527,7 +545,11 @@ func (r *PostgresDBRepo) UpdateBrand(brand models.Brand) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	existingBrand, err := r.GetBrandByID(brand.ID)
+	params := models.OneParams{
+		ID:   brand.ID,
+		Slug: "",
+	}
+	existingBrand, err := r.GetBrandByIDOrSlug(params)
 	if err != nil {
 		return err
 	}
@@ -571,15 +593,27 @@ func (r *PostgresDBRepo) UpdateBrand(brand models.Brand) error {
 
 }
 
-func (r *PostgresDBRepo) GetBrandByID(brandID int) (*models.Brand, error) {
+func (r *PostgresDBRepo) GetBrandByIDOrSlug(params models.OneParams) (*models.Brand, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
+	brandID := params.ID
+	slug := params.Slug
 	var brand models.Brand
+	var identifier any
+	var query string
 
-	query := `SELECT id, name, slug, description, country, logo, logo_key, website_url, created_at, updated_at FROM brand WHERE id = $1;`
+	if brandID == 0 && len(slug) > 0 {
+		query = `SELECT id, name, slug, description, country, logo, logo_key, website_url, created_at, updated_at FROM brand WHERE slug = $1;`
 
-	err := r.DB.QueryRowContext(ctx, query, brandID).Scan(
+		identifier = slug
+	} else if brandID != 0 {
+		query = `SELECT id, name, slug, description, country, logo, logo_key, website_url, created_at, updated_at FROM brand WHERE id = $1;`
+
+		identifier = brandID
+	}
+
+	err := r.DB.QueryRowContext(ctx, query, identifier).Scan(
 		&brand.ID,
 		&brand.Name,
 		&brand.Slug,
@@ -669,16 +703,30 @@ func (r *PostgresDBRepo) DeleteSubCategoryByID(subCategoryID int) error {
 	return nil
 }
 
-func (r *PostgresDBRepo) GetSubCategoryByID(subCategoryID int) (*models.SubCategory, error) {
+func (r *PostgresDBRepo) GetSubCategoryByIDOrSlug(params models.OneParams) (*models.SubCategory, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	var subCategory models.SubCategory
+	subCategoryID := params.ID
+	slug := params.Slug
 
-	query := `
+	var subCategory models.SubCategory
+	var identifier any
+	var query string
+
+	if subCategoryID == 0 && len(slug) > 0 {
+		query = `
+		SELECT sc.id, parent_category_id,c.name as parent_category_name, sc.name,sc.slug, sc.description, sc.image, sc.image_key, sc.created_at, sc.updated_at FROM sub_category sc JOIN category c on sc.parent_category_id = c.id WHERE sc.slug = $1;`
+
+		identifier = slug
+	} else if subCategoryID != 0 {
+		query = `
 		SELECT sc.id, parent_category_id,c.name as parent_category_name, sc.name,sc.slug, sc.description, sc.image, sc.image_key, sc.created_at, sc.updated_at FROM sub_category sc JOIN category c on sc.parent_category_id = c.id WHERE sc.id = $1;`
 
-	err := r.DB.QueryRowContext(ctx, query, subCategoryID).Scan(
+		identifier = subCategoryID
+	}
+
+	err := r.DB.QueryRowContext(ctx, query, identifier).Scan(
 		&subCategory.ID,
 		&subCategory.ParentCategoryID,
 		&subCategory.ParentCategoryName,
@@ -702,7 +750,11 @@ func (r *PostgresDBRepo) UpdateSubCategory(subCategory models.SubCategory) error
 	defer cancel()
 
 	// get existing subcategory
-	existingSubCategory, err := r.GetSubCategoryByID(subCategory.ID)
+	params := models.OneParams{
+		ID:   subCategory.ID,
+		Slug: "",
+	}
+	existingSubCategory, err := r.GetSubCategoryByIDOrSlug(params)
 	if err != nil {
 		return err
 	}
@@ -838,14 +890,27 @@ func (r *PostgresDBRepo) UpdateCategoryByID(category models.Category) error {
 	return nil
 }
 
-func (r *PostgresDBRepo) GetCategoryByID(id int) (*models.Category, error) {
+func (r *PostgresDBRepo) GetCategoryByIDOrSlug(params models.OneParams) (*models.Category, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	var category models.Category
-	query := `SELECT id, name, slug, description, image, image_key, created_at, updated_at FROM category WHERE id = $1;`
+	id := params.ID
+	slug := params.Slug
 
-	row := r.DB.QueryRowContext(ctx, query, id)
+	var query string
+	var identifier any
+
+	if id == 0 && len(slug) > 0 {
+		query = `SELECT id, name, slug, description, image, image_key, created_at, updated_at FROM category WHERE slug = $1;`
+		identifier = slug
+	} else if id != 0 {
+		query = `SELECT id, name, slug, description, image, image_key, created_at, updated_at FROM category WHERE id = $1;`
+		identifier = id
+	}
+
+	var category models.Category
+
+	row := r.DB.QueryRowContext(ctx, query, identifier)
 	err := row.Scan(
 		&category.ID,
 		&category.Name,
@@ -869,7 +934,11 @@ func (r *PostgresDBRepo) DeleteCategoryByID(categoryID int) error {
 	defer cancel()
 
 	// check if category exists
-	exsitingCategory, err := r.GetCategoryByID(categoryID)
+	params := models.OneParams{
+		ID:   categoryID,
+		Slug: "",
+	}
+	exsitingCategory, err := r.GetCategoryByIDOrSlug(params)
 	if err != nil {
 		return err
 	}

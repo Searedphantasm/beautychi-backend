@@ -23,6 +23,13 @@ func (app *application) AllProductsHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// TODO : Add filter
+	// getting optional params
+	//search := queryParams.Get("search")
+	//allQueryparams := models.AllQueryParams{
+	//	Search: search,
+	//}
+	//
 	offset := (page - 1) * limit
 
 	products, err := app.Services.ProductServices.AllProductsService(limit, offset)
@@ -82,6 +89,24 @@ func (app *application) CreateSubCategoryHandler(w http.ResponseWriter, r *http.
 	_ = app.writeJSON(w, http.StatusCreated, subCategory)
 }
 
+func (app *application) OneSubCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	identifier := chi.URLParam(r, "sub_category_identifier")
+	subCategoryID, err := strconv.Atoi(identifier)
+	var subCategory *models.SubCategory
+	if err != nil {
+		subCategory, err = app.Services.SubCategoryServices.OneSubCategoryServiceByIDOrSlug(0, identifier)
+	} else {
+		subCategory, err = app.Services.SubCategoryServices.OneSubCategoryServiceByIDOrSlug(subCategoryID, "")
+	}
+
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, subCategory)
+}
+
 func (app *application) UpdateSubCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var subCategory models.SubCategory
 
@@ -124,14 +149,15 @@ func (app *application) DeleteSubCategoryHandler(w http.ResponseWriter, r *http.
 }
 
 func (app *application) OneProductHandler(w http.ResponseWriter, r *http.Request) {
-	product_id := chi.URLParam(r, "product_id")
-	productID, err := strconv.Atoi(product_id)
+	identifier := chi.URLParam(r, "product_identifier")
+	productID, err := strconv.Atoi(identifier)
+	var product *models.Product
 	if err != nil {
-		app.errorJSON(w, errors.New("invalid product id"))
-		return
+		product, err = app.Services.ProductServices.OneProductServiceByProductIDOrSlug(0, identifier)
+	} else {
+		product, err = app.Services.ProductServices.OneProductServiceByProductIDOrSlug(productID, "")
 	}
 
-	product, err := app.Services.ProductServices.OneProductServiceByProductID(productID)
 	if err != nil {
 		app.errorJSON(w, err)
 		return
@@ -268,14 +294,15 @@ func (app *application) UpdateProductImageHandler(w http.ResponseWriter, r *http
 }
 
 func (app *application) OneCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	category_id := chi.URLParam(r, "category_id")
-	categoryID, err := strconv.Atoi(category_id)
+	identifier := chi.URLParam(r, "category_identifier")
+	categoryID, err := strconv.Atoi(identifier)
+	var category *models.Category
 	if err != nil {
-		app.errorJSON(w, errors.New("invalid category id"))
-		return
+		category, err = app.Services.CategoryServices.OneCategoryServiceByCategoryIDOrSlug(0, identifier)
+	} else {
+		category, err = app.Services.CategoryServices.OneCategoryServiceByCategoryIDOrSlug(categoryID, "")
 	}
 
-	category, err := app.DB.GetCategoryByID(categoryID)
 	if err != nil {
 		app.errorJSON(w, err)
 		return
@@ -337,14 +364,15 @@ func (app *application) DeleteBrandHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (app *application) OneBrandHandler(w http.ResponseWriter, r *http.Request) {
-	brand_id := chi.URLParam(r, "brand_id")
-	brandID, err := strconv.Atoi(brand_id)
+	identifier := chi.URLParam(r, "brand_identifier")
+	brandID, err := strconv.Atoi(identifier)
+	var brand *models.Brand
 	if err != nil {
-		app.errorJSON(w, errors.New("invalid brand id"))
-		return
+		brand, err = app.Services.BrandServices.GetBrandServiceByIDOrSlug(0, identifier)
+	} else {
+		brand, err = app.Services.BrandServices.GetBrandServiceByIDOrSlug(brandID, "")
 	}
 
-	brand, err := app.Services.BrandServices.GetBrandService(brandID)
 	if err != nil {
 		app.errorJSON(w, err)
 		return

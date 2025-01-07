@@ -22,6 +22,6 @@ INSERT INTO product (title, slug, description, poster, poster_key, price, catego
 
 
 INSERT INTO product_specifications (product_id, specs_title, specs_description) VALUES
-                                                                                    (1, 'صفحه نمایش', 'صفحه نمایش 6.5 اینچی با کیفیت بالا'),
+                                                                                    (3, 'صفحه نمایش', 'صفحه نمایش 6.5 اینچی با کیفیت بالا'),
                                                                                     (2, 'پردازنده', 'پردازنده M1 با عملکرد فوق‌العاده'),
                                                                                     (3, 'تعداد صفحات', '300 صفحه');

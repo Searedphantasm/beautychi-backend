@@ -28,8 +28,14 @@ func (ps *ProductServices) DeleteProductService(productID int) error {
 	return nil
 }
 
-func (ps *ProductServices) OneProductServiceByProductID(productID int) (*models.Product, error) {
-	product, err := ps.PostgresDBRepo.ProductByID(productID)
+func (ps *ProductServices) OneProductServiceByProductIDOrSlug(productID int, productSlug string) (*models.Product, error) {
+
+	params := models.OneParams{
+		ID:   productID,
+		Slug: productSlug,
+	}
+
+	product, err := ps.PostgresDBRepo.ProductByIDOrSlug(params)
 	if err != nil {
 		return nil, err
 	}

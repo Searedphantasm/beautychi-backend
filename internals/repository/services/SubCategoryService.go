@@ -70,3 +70,18 @@ func (scs *SubCategoryServices) DeleteSubCategoryService(subCategoryID int) erro
 
 	return nil
 }
+
+func (scs *SubCategoryServices) OneSubCategoryServiceByIDOrSlug(subCategoryID int, subCategorySlug string) (*models.SubCategory, error) {
+
+	params := models.OneParams{
+		ID:   subCategoryID,
+		Slug: subCategorySlug,
+	}
+
+	subCategory, err := scs.PostgresDBRepo.GetSubCategoryByIDOrSlug(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return subCategory, nil
+}

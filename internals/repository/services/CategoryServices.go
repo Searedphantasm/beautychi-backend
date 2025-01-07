@@ -72,8 +72,14 @@ func (cs *CategoryServices) DeleteCategoryService(categoryID int) error {
 	return nil
 }
 
-func (cs *CategoryServices) GetCategoryByIDService(categoryID int) (*models.Category, error) {
-	category, err := cs.PostgresDBRepo.GetCategoryByID(categoryID)
+func (cs *CategoryServices) OneCategoryServiceByCategoryIDOrSlug(categoryID int, categorySlug string) (*models.Category, error) {
+
+	params := models.OneParams{
+		ID:   categoryID,
+		Slug: categorySlug,
+	}
+
+	category, err := cs.PostgresDBRepo.GetCategoryByIDOrSlug(params)
 	if err != nil {
 		return nil, err
 	}
