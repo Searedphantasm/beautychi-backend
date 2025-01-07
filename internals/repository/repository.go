@@ -10,7 +10,7 @@ type DatabaseRepo interface {
 
 	AllSubCategories() ([]*models.SubCategory, error)
 	UpdateSubCategory(subCategory models.SubCategory) error
-	GetSubCategoryByID(subCategoryID int) (*models.SubCategory, error)
+	GetSubCategoryByIDOrSlug(params models.OneParams) (*models.SubCategory, error)
 	DeleteSubCategoryByID(subCategoryID int) error
 	InsertSubCategory(subCategory models.SubCategory) error
 
@@ -18,10 +18,10 @@ type DatabaseRepo interface {
 	InsertCategory(category models.Category) error
 	UpdateCategoryByID(category models.Category) error
 	DeleteCategoryByID(categoryID int) error
-	GetCategoryByID(id int) (*models.Category, error)
+	GetCategoryByIDOrSlug(params models.OneParams) (*models.Category, error)
 
 	AllProducts(limit, offset int) ([]*models.Product, error)
-	ProductByID(id int) (*models.Product, error)
+	ProductByIDOrSlug(params models.OneParams) (*models.Product, error)
 	InsertProduct(product models.Product) error
 	UpdateProduct(product models.Product) error
 	UpdateProductImages(productID int, productImages []models.ProductImage) error
@@ -29,13 +29,13 @@ type DatabaseRepo interface {
 	AllBrands() ([]*models.Brand, error)
 	InsertBrand(brand models.Brand) error
 	DeleteBrandByID(brandID int) error
-	GetBrandByID(brandID int) (*models.Brand, error)
+	GetBrandByIDOrSlug(params models.OneParams) (*models.Brand, error)
 	UpdateBrand(brand models.Brand) error
 }
 
 type ProductRepo interface {
 	AllProductsService(limit, offset int) ([]*models.Product, error)
-	OneProductServiceByProductID(productID int) (*models.Product, error)
+	OneProductServiceByProductIDOrSlug(productID int, productSlug string) (*models.Product, error)
 
 	InsertProductService(product models.Product) error
 	UpdateProductService(product models.Product) error
@@ -48,12 +48,13 @@ type CategoryRepo interface {
 	CreateCategoryService(category models.Category) error
 	UpdateCategoryService(category models.Category) error
 
-	GetCategoryByIDService(categoryID int) (*models.Category, error)
+	OneCategoryServiceByCategoryIDOrSlug(categoryID int, categorySlug string) (*models.Category, error)
 	DeleteCategoryService(categoryID int) error
 }
 
 type SubCategoryRepo interface {
 	AllSubCategoryService() ([]*models.SubCategory, error)
+	OneSubCategoryServiceByIDOrSlug(subCategoryID int, subCategorySlug string) (*models.SubCategory, error)
 	InsertSubCategoryService(subCategory models.SubCategory) error
 	UpdateSubCategoryService(subCategory models.SubCategory) error
 	DeleteSubCategoryService(subCategoryID int) error
@@ -64,5 +65,5 @@ type BrandRepo interface {
 	DeleteBrandService(brandID int) error
 	CreateBrandService(brand models.Brand) error
 	UpdateBrandService(brand models.Brand) error
-	GetBrandService(brandID int) (*models.Brand, error)
+	GetBrandServiceByIDOrSlug(brandID int, brandSlug string) (*models.Brand, error)
 }
