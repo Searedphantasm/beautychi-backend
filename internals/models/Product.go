@@ -12,6 +12,7 @@ type Product struct {
 	PosterKey            string                  `json:"poster_key"`
 	CategoryID           int                     `json:"category_id"`
 	CategoryName         string                  `json:"category_name"`
+	CategorySlug         string                  `json:"category_slug"`
 	BrandID              int                     `json:"brand_id"`
 	BrandName            string                  `json:"brand_name"`
 	ProductStock         int                     `json:"product_stock"`

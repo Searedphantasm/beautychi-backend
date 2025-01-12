@@ -4,8 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/PAPAvision-co/beautychi-backend.git/internals/models"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"log"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -19,15 +23,85 @@ func (r *PostgresDBRepo) Connection() *sql.DB {
 	return r.DB
 }
 
-func (r *PostgresDBRepo) AllProducts(limit, offset int) ([]*models.Product, error) {
+// insert is a helper function to put a value on specific index in slice
+func insert(slice []any, index int, value any) []any {
+	// make room for the new element by creating a new slice with one additional element
+	result := make([]any, len(slice)+1)
+
+	// copy the part of the slice before the insertion point
+	copy(result, slice[:index])
+
+	// insert the new element
+	result[index] = value
+
+	// merging both part of the slices
+	copy(result[index+1:], slice[index:])
+
+	return result
+}
+
+func (r *PostgresDBRepo) AllProducts(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Product, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `
-		SELECT p.id, title, p.slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, coalesce(product_discount_price,0), sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id LIMIT $1 OFFSET $2;
-	`
+	var query string
+	var args []any
+	// pre-append limit and offset
+	args = append(args, limit, offset)
 
-	rows, err := r.DB.QueryContext(ctx, query, limit, offset)
+	// Base query
+	baseQuery := `
+    SELECT p.id, title, p.slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, coalesce(product_discount_price,0), sub_category_id, consumer_guide, contact, status,pc.slug as category_slug,pc.name,b.name,sc.name, p.created_at, p.updated_at 
+    FROM product p 
+    JOIN category pc ON p.category_id = pc.id 
+    JOIN brand b ON p.brand_id = b.id 
+    JOIN sub_category sc ON p.sub_category_id = sc.id
+    `
+
+	// Conditions for WHERE clause
+	var conditions []string
+	var conditionIndex int = 1
+
+	if !validation.IsEmpty(optionalParams.Search) {
+		conditions = append(conditions, fmt.Sprintf("p.slug ILIKE $%d", conditionIndex))
+		args = append([]any{"%" + optionalParams.Search + "%"}, args...)
+		conditionIndex++
+
+		log.Println(args)
+		log.Println(conditions)
+	}
+
+	if !validation.IsEmpty(optionalParams.ProductCategory) {
+		conditions = append(conditions, fmt.Sprintf("pc.slug = $%d", conditionIndex))
+		if len(args) > 2 {
+			args = insert(args, 1, optionalParams.ProductCategory)
+		} else {
+			args = append([]any{optionalParams.ProductCategory}, args...)
+		}
+		conditionIndex++
+
+		log.Println(args)
+		log.Println(conditions)
+	}
+
+	// FIXME: The order is not correct for this params,
+	// NOTE: NOT READY
+	if !validation.IsEmpty(optionalParams.Filter) {
+
+		conditions = append(conditions, fmt.Sprintf("p.created_at::date = $%d", conditionIndex))
+		args = append([]any{optionalParams.Filter}, args...)
+		conditionIndex++
+	}
+
+	// Construct WHERE clause if there are any conditions
+	if len(conditions) > 0 {
+		query = baseQuery + " WHERE " + strings.Join(conditions, " AND ") + fmt.Sprintf(" LIMIT $%d OFFSET $%d;", conditionIndex, conditionIndex+1)
+		log.Println(query)
+	} else {
+		query = baseQuery + " LIMIT $1 OFFSET $2;"
+	}
+
+	rows, err := r.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +127,7 @@ func (r *PostgresDBRepo) AllProducts(limit, offset int) ([]*models.Product, erro
 			&pro.ConsumerGuide,
 			&pro.Contact,
 			&pro.Status,
+			&pro.CategorySlug,
 			&pro.CategoryName,
 			&pro.BrandName,
 			&pro.SubCategoryName,
@@ -397,14 +472,23 @@ func (r *PostgresDBRepo) DeleteProductByID(id int) error {
 	return nil
 }
 
-func (r *PostgresDBRepo) AllCategories() ([]*models.Category, error) {
+func (r *PostgresDBRepo) AllCategories(optionalParams models.OptionalQueryParams) ([]*models.Category, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `
+	var query string
+	var args []any
+	if !validation.IsEmpty(optionalParams.Search) {
+		query = ` SELECT id, name,slug, description, image, image_key, created_at, updated_at FROM category WHERE slug ILIKE '%' || $1 || '%' ; `
+
+		args = append(args, optionalParams.Search)
+	} else {
+		query = `
 		SELECT id, name,slug, description, image, image_key, created_at, updated_at FROM category;
-	`
-	rows, err := r.DB.QueryContext(ctx, query)
+		`
+	}
+
+	rows, err := r.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

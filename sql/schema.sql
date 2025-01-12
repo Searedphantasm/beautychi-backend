@@ -83,4 +83,29 @@ CREATE TABLE IF NOT EXISTS product_image
     url_key VARCHAR(255),
     alt_text VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
+
+CREATE TABLE IF NOT EXISTS user (
+    id  SERIAL PRIMARY KEY ,
+    first_name VARCHAR(100) NOT NULL ,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    phone VARCHAR(11) NOT NULL UNIQUE,
+    is_admin BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_address (
+    id  SERIAL PRIMARY KEY ,
+    user_id INT REFERENCES user (id) ON DELETE CASCADE ,
+    city VARCHAR(255) NOT NULL ,
+    state VARCHAR(255) NOT NULL ,
+    address TEXT NOT NULL ,
+    postal_code VARCHAR(11) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE INDEX idx_product_title ON product(slug);

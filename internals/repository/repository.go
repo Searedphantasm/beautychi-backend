@@ -14,13 +14,13 @@ type DatabaseRepo interface {
 	DeleteSubCategoryByID(subCategoryID int) error
 	InsertSubCategory(subCategory models.SubCategory) error
 
-	AllCategories() ([]*models.Category, error)
+	AllCategories(optionalParams models.OptionalQueryParams) ([]*models.Category, error)
 	InsertCategory(category models.Category) error
 	UpdateCategoryByID(category models.Category) error
 	DeleteCategoryByID(categoryID int) error
 	GetCategoryByIDOrSlug(params models.OneParams) (*models.Category, error)
 
-	AllProducts(limit, offset int) ([]*models.Product, error)
+	AllProducts(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Product, error)
 	ProductByIDOrSlug(params models.OneParams) (*models.Product, error)
 	InsertProduct(product models.Product) error
 	UpdateProduct(product models.Product) error
@@ -34,7 +34,7 @@ type DatabaseRepo interface {
 }
 
 type ProductRepo interface {
-	AllProductsService(limit, offset int) ([]*models.Product, error)
+	AllProductsService(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Product, error)
 	OneProductServiceByProductIDOrSlug(productID int, productSlug string) (*models.Product, error)
 
 	InsertProductService(product models.Product) error
@@ -44,7 +44,7 @@ type ProductRepo interface {
 }
 
 type CategoryRepo interface {
-	AllCategoryService() ([]*models.Category, error)
+	AllCategoryService(optionalParams models.OptionalQueryParams) ([]*models.Category, error)
 	CreateCategoryService(category models.Category) error
 	UpdateCategoryService(category models.Category) error
 

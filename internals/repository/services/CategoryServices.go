@@ -10,8 +10,9 @@ type CategoryServices struct {
 	PostgresDBRepo *dbrepo.PostgresDBRepo
 }
 
-func (cs *CategoryServices) AllCategoryService() ([]*models.Category, error) {
-	categories, err := cs.PostgresDBRepo.AllCategories()
+func (cs *CategoryServices) AllCategoryService(optionalParams models.OptionalQueryParams) ([]*models.Category, error) {
+
+	categories, err := cs.PostgresDBRepo.AllCategories(optionalParams)
 	if err != nil {
 		return nil, err
 	}
