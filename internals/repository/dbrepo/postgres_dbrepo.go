@@ -1040,3 +1040,133 @@ func (r *PostgresDBRepo) DeleteCategoryByID(categoryID int) error {
 
 	return nil
 }
+
+// CUSTOMERS
+
+func (r *PostgresDBRepo) AllCustomers(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Customer, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	var query string
+	var args []any
+	// pre-append limit and offset
+	args = append(args, limit, offset)
+
+	// Base query
+	baseQuery := `SELECT id, username, first_name, last_name, email, phone, created_at, updated_at FROM customer`
+
+	// Conditions for WHERE clause
+	var conditions []string
+	var conditionIndex int = 1
+
+	if !validation.IsEmpty(optionalParams.Search) {
+		conditions = append(conditions, fmt.Sprintf("phone ILIKE $%d", conditionIndex))
+		args = append([]any{"%" + optionalParams.Search + "%"}, args...)
+		conditionIndex++
+	}
+
+	// Construct WHERE clause if there are any conditions
+	if len(conditions) > 0 {
+		query = baseQuery + " WHERE " + strings.Join(conditions, " AND ") + fmt.Sprintf(" LIMIT $%d OFFSET $%d;", conditionIndex, conditionIndex+1)
+		log.Println(query)
+	} else {
+		query = baseQuery + " LIMIT $1 OFFSET $2;"
+		log.Println(query)
+	}
+
+	rows, err := r.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var customers []*models.Customer
+
+	for rows.Next() {
+		var customer models.Customer
+		err := rows.Scan(
+			&customer.ID,
+			&customer.Username,
+			&customer.FirstName,
+			&customer.LastName,
+			&customer.Email,
+			&customer.Phone,
+			&customer.CreatedAt,
+			&customer.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		customers = append(customers, &customer)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return customers, nil
+}
+
+func (r *PostgresDBRepo) OneCustomerByID(id string) (*models.Customer, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `SELECT id, username, first_name, last_name, email, phone, created_at, updated_at FROM customer WHERE id = $1;`
+
+	var customer models.Customer
+
+	row := r.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&customer.ID,
+		&customer.Username,
+		&customer.FirstName,
+		&customer.LastName,
+		&customer.Email,
+		&customer.Phone,
+		&customer.CreatedAt,
+		&customer.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	query = `SELECT id, customer_id, city, state, address, postal_code, created_at, updated_at FROM customer_address
+			WHERE customer_id = $1;`
+
+	rows, err := r.DB.QueryContext(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var addresses []*models.CustomerAddress
+
+	for rows.Next() {
+		var address models.CustomerAddress
+		err := rows.Scan(
+			&address.ID,
+			&address.CustomerID,
+			&address.City,
+			&address.State,
+			&address.Address,
+			&address.PostalCode,
+			&address.CreatedAt,
+			&address.UpdatedAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		addresses = append(addresses, &address)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	customer.Addresses = addresses
+	return &customer, nil
+}

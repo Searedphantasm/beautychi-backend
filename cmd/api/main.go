@@ -20,6 +20,7 @@ type application struct {
 		CategoryServices    repository.CategoryRepo
 		BrandServices       repository.BrandRepo
 		SubCategoryServices repository.SubCategoryRepo
+		CustomerServices    repository.CustomerRepo
 	}
 	DSN    string
 	Domain string
@@ -45,6 +46,9 @@ func main() {
 
 	app.DB = &dbrepo.PostgresDBRepo{DB: conn}
 	app.Services.ProductServices = &services.ProductServices{
+		PostgresDBRepo: &dbrepo.PostgresDBRepo{DB: conn},
+	}
+	app.Services.CustomerServices = &services.CustomerServices{
 		PostgresDBRepo: &dbrepo.PostgresDBRepo{DB: conn},
 	}
 	app.Services.CategoryServices = &services.CategoryServices{

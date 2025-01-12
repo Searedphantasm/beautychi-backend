@@ -45,6 +45,8 @@ DO $$
         END IF;
     END $$;
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS product
 (
     id                     SERIAL PRIMARY KEY,
@@ -85,20 +87,20 @@ CREATE TABLE IF NOT EXISTS product_image
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS user (
-    id  SERIAL PRIMARY KEY ,
-    first_name VARCHAR(100) NOT NULL ,
-    last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE,
+CREATE TABLE IF NOT EXISTS customer (
+    id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(200) UNIQUE ,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    email VARCHAR(250) UNIQUE,
     phone VARCHAR(11) NOT NULL UNIQUE,
-    is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS user_address (
+CREATE TABLE IF NOT EXISTS customer_address (
     id  SERIAL PRIMARY KEY ,
-    user_id INT REFERENCES user (id) ON DELETE CASCADE ,
+    customer_id uuid REFERENCES customer (id) ON DELETE CASCADE ,
     city VARCHAR(255) NOT NULL ,
     state VARCHAR(255) NOT NULL ,
     address TEXT NOT NULL ,
