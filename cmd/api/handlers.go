@@ -24,15 +24,20 @@ func (app *application) AllProductsHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// TODO : Add filter
-	// getting optional params
-	//search := queryParams.Get("search")
-	//allQueryparams := models.AllQueryParams{
-	//	Search: search,
-	//}
-	//
+	//getting optional params
+	search := queryParams.Get("search")
+	filter := queryParams.Get("filter")
+	category := queryParams.Get("category")
+
+	optionalParams := models.OptionalQueryParams{
+		Search:          search,
+		Filter:          filter,
+		ProductCategory: category,
+	}
+
 	offset := (page - 1) * limit
 
-	products, err := app.Services.ProductServices.AllProductsService(limit, offset)
+	products, err := app.Services.ProductServices.AllProductsService(limit, offset, optionalParams)
 	if err != nil {
 		app.errorJSON(w, err)
 		return
@@ -42,7 +47,17 @@ func (app *application) AllProductsHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (app *application) AllCategoriesHandler(w http.ResponseWriter, r *http.Request) {
-	categories, err := app.Services.CategoryServices.AllCategoryService()
+
+	queryParams := r.URL.Query()
+	search := queryParams.Get("search")
+	filter := queryParams.Get("filter")
+
+	optionalParams := models.OptionalQueryParams{
+		Search: search,
+		Filter: filter,
+	}
+
+	categories, err := app.Services.CategoryServices.AllCategoryService(optionalParams)
 	if err != nil {
 		app.errorJSON(w, err)
 		return

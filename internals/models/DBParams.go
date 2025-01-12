@@ -5,7 +5,8 @@ type OneParams struct {
 	Slug string
 }
 
-type AllQueryParams struct {
-	Search string
-	Filter string
+type OptionalQueryParams struct {
+	Search          string
+	Filter          string
+	ProductCategory string
 }

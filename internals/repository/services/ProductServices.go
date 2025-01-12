@@ -10,8 +10,8 @@ type ProductServices struct {
 	PostgresDBRepo *dbrepo.PostgresDBRepo
 }
 
-func (ps *ProductServices) AllProductsService(limit, offset int) ([]*models.Product, error) {
-	products, err := ps.PostgresDBRepo.AllProducts(limit, offset)
+func (ps *ProductServices) AllProductsService(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Product, error) {
+	products, err := ps.PostgresDBRepo.AllProducts(limit, offset, optionalParams)
 	if err != nil {
 		return nil, err
 	}
