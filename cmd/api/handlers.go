@@ -189,7 +189,7 @@ func (app *application) CreateProductHandler(w http.ResponseWriter, r *http.Requ
 		app.errorJSON(w, err)
 		return
 	}
-
+	
 	err = app.Services.ProductServices.InsertProductService(product)
 	if err != nil {
 		app.errorJSON(w, err)

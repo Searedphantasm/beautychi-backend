@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS product
     id                     SERIAL PRIMARY KEY,
     title                  VARCHAR(255) NOT NULL,
     slug                   VARCHAR(255) NOT NULL,
+    rating                 FLOAT DEFAULT 0,
     description            TEXT,
     poster                 TEXT NOT NULL,
     poster_key             VARCHAR(255) NOT NULL,
@@ -67,6 +68,14 @@ CREATE TABLE IF NOT EXISTS product
     created_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
+);
+
+CREATE TABLE IF NOT EXISTS product_review(
+    id                     SERIAL PRIMARY KEY,
+    product_id             INT REFERENCES product(id) ON DELETE CASCADE ,
+    review_body            TEXT,
+    customer_id            INT REFERENCES customer(id) ON DELETE NO ACTION ,
+    rate                   INT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS product_specifications
@@ -94,6 +103,7 @@ CREATE TABLE IF NOT EXISTS customer (
     last_name VARCHAR(100),
     email VARCHAR(250) UNIQUE,
     phone VARCHAR(11) NOT NULL UNIQUE,
+    active bool NOT NULL DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

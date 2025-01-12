@@ -1055,7 +1055,6 @@ func (r *PostgresDBRepo) AllCustomers(limit, offset int, optionalParams models.O
 	// Base query
 	baseQuery := `SELECT id, username, first_name, last_name, email, phone, created_at, updated_at FROM customer`
 
-	// Conditions for WHERE clause
 	var conditions []string
 	var conditionIndex int = 1
 
@@ -1065,7 +1064,6 @@ func (r *PostgresDBRepo) AllCustomers(limit, offset int, optionalParams models.O
 		conditionIndex++
 	}
 
-	// Construct WHERE clause if there are any conditions
 	if len(conditions) > 0 {
 		query = baseQuery + " WHERE " + strings.Join(conditions, " AND ") + fmt.Sprintf(" LIMIT $%d OFFSET $%d;", conditionIndex, conditionIndex+1)
 		log.Println(query)

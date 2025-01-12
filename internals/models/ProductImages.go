@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type ProductImage struct {
 	ID        int       `json:"id"`
