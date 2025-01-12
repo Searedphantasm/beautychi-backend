@@ -45,11 +45,14 @@ DO $$
         END IF;
     END $$;
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS product
 (
     id                     SERIAL PRIMARY KEY,
     title                  VARCHAR(255) NOT NULL,
     slug                   VARCHAR(255) NOT NULL,
+    rating                 FLOAT DEFAULT 0,
     description            TEXT,
     poster                 TEXT NOT NULL,
     poster_key             VARCHAR(255) NOT NULL,
@@ -65,6 +68,14 @@ CREATE TABLE IF NOT EXISTS product
     created_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
+);
+
+CREATE TABLE IF NOT EXISTS product_review(
+    id                     SERIAL PRIMARY KEY,
+    product_id             INT REFERENCES product(id) ON DELETE CASCADE ,
+    review_body            TEXT,
+    customer_id            INT REFERENCES customer(id) ON DELETE NO ACTION ,
+    rate                   INT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS product_specifications
@@ -85,20 +96,21 @@ CREATE TABLE IF NOT EXISTS product_image
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS user (
-    id  SERIAL PRIMARY KEY ,
-    first_name VARCHAR(100) NOT NULL ,
-    last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE,
+CREATE TABLE IF NOT EXISTS customer (
+    id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(200) UNIQUE ,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    email VARCHAR(250) UNIQUE,
     phone VARCHAR(11) NOT NULL UNIQUE,
-    is_admin BOOLEAN DEFAULT FALSE,
+    active bool NOT NULL DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS user_address (
+CREATE TABLE IF NOT EXISTS customer_address (
     id  SERIAL PRIMARY KEY ,
-    user_id INT REFERENCES user (id) ON DELETE CASCADE ,
+    customer_id uuid REFERENCES customer (id) ON DELETE CASCADE ,
     city VARCHAR(255) NOT NULL ,
     state VARCHAR(255) NOT NULL ,
     address TEXT NOT NULL ,

@@ -189,7 +189,7 @@ func (app *application) CreateProductHandler(w http.ResponseWriter, r *http.Requ
 		app.errorJSON(w, err)
 		return
 	}
-
+	
 	err = app.Services.ProductServices.InsertProductService(product)
 	if err != nil {
 		app.errorJSON(w, err)
@@ -420,4 +420,55 @@ func (app *application) UpdateBrandHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	_ = app.writeJSON(w, http.StatusOK, brand)
+}
+
+// CUSTOMERS
+
+func (app *application) AllCustomersHandler(w http.ResponseWriter, r *http.Request) {
+	queryParams := r.URL.Query()
+
+	limit, err := strconv.Atoi(queryParams.Get("limit"))
+	if err != nil {
+		app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+	page, err := strconv.Atoi(queryParams.Get("page"))
+	if err != nil {
+		app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// TODO : Add filter
+	//getting optional params
+	search := queryParams.Get("search")
+	filter := queryParams.Get("filter")
+	category := queryParams.Get("category")
+
+	optionalParams := models.OptionalQueryParams{
+		Search:          search,
+		Filter:          filter,
+		ProductCategory: category,
+	}
+
+	offset := (page - 1) * limit
+
+	customers, err := app.Services.CustomerServices.AllCustomersService(limit, offset, optionalParams)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, customers)
+}
+
+func (app *application) OneCustomerHandler(w http.ResponseWriter, r *http.Request) {
+	customerID := chi.URLParam(r, "customer_id")
+
+	customer, err := app.Services.CustomerServices.OneCustomerServiceByID(customerID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, customer)
 }

@@ -41,5 +41,10 @@ func (app *application) routes() http.Handler {
 	mux.Put("/api/sub-categories/{sub_category_id}", app.UpdateSubCategoryHandler)
 	mux.Delete("/api/sub-categories/{sub_category_id}", app.DeleteSubCategoryHandler)
 
+	// FIXME: ADDING authentication for admin.
+	// customer route
+	mux.Get("/api/customers", app.AllCustomersHandler)
+	mux.Get("/api/customers/{customer_id}", app.OneCustomerHandler)
+
 	return mux
 }

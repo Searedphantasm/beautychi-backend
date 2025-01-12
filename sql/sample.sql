@@ -25,3 +25,19 @@ INSERT INTO product_specifications (product_id, specs_title, specs_description) 
                                                                                     (3, 'صفحه نمایش', 'صفحه نمایش 6.5 اینچی با کیفیت بالا'),
                                                                                     (2, 'پردازنده', 'پردازنده M1 با عملکرد فوق‌العاده'),
                                                                                     (3, 'تعداد صفحات', '300 صفحه');
+
+INSERT INTO customer (username, first_name, last_name, email, phone) VALUES
+                                                                         ('ali_karimi', 'علی', 'کریمی', 'ali.karimi@example.com', '09123456789'),
+                                                                         ('sara_ahmadi', 'سارا', 'احمدی', 'sara.ahmadi@example.com', '09132345678'),
+                                                                         ('reza_gholipour', 'رضا', 'قلی‌پور', 'reza.gholipour@example.com', '09143456789'),
+                                                                         ('narges_mohammadi', 'نرگس', 'محمدی', 'narges.mohammadi@example.com', '09154567890'),
+                                                                         ('kaveh_rahimi', 'کاوه', 'رحیمی', 'kaveh.rahimi@example.com', '09165678901');
+
+
+INSERT INTO customer_address (customer_id, city, state, address, postal_code) VALUES
+                                                                                  ('595b62d3-c94b-404b-b60a-cd86c68b6250', 'تهران', 'تهران', 'خیابان ولیعصر، کوچه یاس', '12345678901'),
+                                                                                  ('68ac0587-8a76-45ba-bef7-3aa48e8c0768', 'اصفهان', 'اصفهان', 'خیابان چهارباغ بالا، نزدیک میدان نقش جهان', '23456789012'),
+                                                                                  ('68ac0587-8a76-45ba-bef7-3aa48e8c0768', 'شیراز', 'فارس', 'بلوار زند، کوچه گلها', '34567890123'),
+                                                                                  ('595b62d3-c94b-404b-b60a-cd86c68b6250', 'مشهد', 'خراسان رضوی', 'خیابان امام رضا، نزدیک حرم', '45678901234'),
+                                                                                  ('8b6505d5-624e-4400-8160-7d37870a692a', 'تبریز', 'آذربایجان شرقی', 'خیابان ارتش جنوبی، کوچه شهید بهشتی', '56789012345');
+

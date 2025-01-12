@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bytes"
 	"database/sql"
 	"github.com/PAPAvision-co/beautychi-backend.git/internals/models"
 )
@@ -31,6 +32,9 @@ type DatabaseRepo interface {
 	DeleteBrandByID(brandID int) error
 	GetBrandByIDOrSlug(params models.OneParams) (*models.Brand, error)
 	UpdateBrand(brand models.Brand) error
+
+	AllCustomers(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Customer, error)
+	OneCustomerByID(id string) (*models.Customer, error)
 }
 
 type ProductRepo interface {
@@ -66,4 +70,13 @@ type BrandRepo interface {
 	CreateBrandService(brand models.Brand) error
 	UpdateBrandService(brand models.Brand) error
 	GetBrandServiceByIDOrSlug(brandID int, brandSlug string) (*models.Brand, error)
+}
+
+type CustomerRepo interface {
+	AllCustomersService(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Customer, error)
+	OneCustomerServiceByID(id string) (*models.Customer, error)
+}
+
+type FileRepo interface {
+	UploadUsingS3(fileContent *bytes.Reader, fileName string) (string, error)
 }
