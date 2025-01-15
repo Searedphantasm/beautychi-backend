@@ -1,8 +1,6 @@
 package services
 
 import (
-	"bytes"
-	"encoding/base64"
 	"github.com/PAPAvision-co/beautychi-backend.git/internals/models"
 	"github.com/PAPAvision-co/beautychi-backend.git/internals/repository/dbrepo"
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -10,7 +8,6 @@ import (
 
 type ProductServices struct {
 	PostgresDBRepo *dbrepo.PostgresDBRepo
-	FileService    FileService
 }
 
 func (ps *ProductServices) AllProductsService(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Product, error) {
@@ -85,23 +82,6 @@ func (ps *ProductServices) InsertProductService(product models.Product) error {
 
 	if err != nil {
 		return err
-	}
-
-	for _, file := range product.ProductImages {
-		// Decode base64 string to bytes
-		decodedFile, err := base64.StdEncoding.DecodeString(file.Url)
-		if err != nil {
-			return err
-		}
-
-		// Convert bytes to bytes.Reader
-		fileContent := bytes.NewReader(decodedFile)
-		res, err := ps.FileService.UploadUsingS3(fileContent, file.UrlKey)
-		if err != nil {
-			return err
-		}
-
-		file.Url = res
 	}
 
 	err = ps.PostgresDBRepo.InsertProduct(product)
