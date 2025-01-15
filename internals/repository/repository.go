@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"bytes"
 	"database/sql"
 	"github.com/PAPAvision-co/beautychi-backend.git/internals/models"
 )
@@ -75,8 +74,4 @@ type BrandRepo interface {
 type CustomerRepo interface {
 	AllCustomersService(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Customer, error)
 	OneCustomerServiceByID(id string) (*models.Customer, error)
-}
-
-type FileRepo interface {
-	UploadUsingS3(fileContent *bytes.Reader, fileName string) (string, error)
 }
