@@ -45,6 +45,8 @@ DO $$
         END IF;
     END $$;
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS product
 (
     id                     SERIAL PRIMARY KEY,
@@ -83,4 +85,38 @@ CREATE TABLE IF NOT EXISTS product_image
     url_key VARCHAR(255),
     alt_text VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
+
+CREATE TABLE IF NOT EXISTS customer (
+                                        id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                        username VARCHAR(200) UNIQUE ,
+                                        first_name VARCHAR(100),
+                                        last_name VARCHAR(100),
+                                        email VARCHAR(250) UNIQUE,
+                                        phone VARCHAR(11) NOT NULL UNIQUE,
+                                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS customer_address (
+                                                id  SERIAL PRIMARY KEY ,
+                                                customer_id uuid REFERENCES customer (id) ON DELETE CASCADE ,
+                                                city VARCHAR(255) NOT NULL ,
+                                                state VARCHAR(255) NOT NULL ,
+                                                address TEXT NOT NULL ,
+                                                postal_code VARCHAR(11) NOT NULL,
+                                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+create table product_review
+(
+    id          serial
+        primary key,
+    product_id  integer,
+    review_body text,
+    customer_id uuid,
+    rate        integer not null
+);
+
+CREATE INDEX idx_product_title ON product(slug);
