@@ -26,6 +26,9 @@ type DatabaseRepo interface {
 	UpdateProduct(product models.Product) error
 	UpdateProductImages(productID int, productImages []models.ProductImage) error
 
+	OneProductByIDAllReviews(limit, offset, productID int) ([]*models.ProductReview, error)
+	InsertProductReview(productID int, review models.ProductReview) error
+
 	AllBrands() ([]*models.Brand, error)
 	InsertBrand(brand models.Brand) error
 	DeleteBrandByID(brandID int) error
@@ -39,11 +42,14 @@ type DatabaseRepo interface {
 type ProductRepo interface {
 	AllProductsService(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Product, error)
 	OneProductServiceByProductIDOrSlug(productID int, productSlug string) (*models.Product, error)
+	OneProductByIDReviewsService(limit, offset, productID int) ([]*models.ProductReview, error)
 
 	InsertProductService(product models.Product) error
 	UpdateProductService(product models.Product) error
 	UpdateProductImagesService(productID int, productImages []models.ProductImage) error
 	DeleteProductService(productID int) error
+
+	InsertProductReviewService(productID int, review models.ProductReview) error
 }
 
 type CategoryRepo interface {

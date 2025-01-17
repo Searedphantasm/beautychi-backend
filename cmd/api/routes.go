@@ -16,6 +16,9 @@ func (app *application) routes() http.Handler {
 	mux.Get("/api/products", app.AllProductsHandler)
 	mux.Post("/api/products", app.CreateProductHandler)
 	mux.Get("/api/products/{product_identifier}", app.OneProductHandler)
+	// product reviews
+	mux.Get("/api/products/{product_id}/reviews", app.OneProductReviews)
+	mux.Post("/api/products/{product_id}/reviews", app.CreateProductReview)
 	mux.Put("/api/products/{product_id}", app.UpdateProductHandler)
 	mux.Put("/api/products/{product_id}/product-images", app.UpdateProductImageHandler)
 	mux.Delete("/api/products/{product_id}", app.DeleteProductHandler)

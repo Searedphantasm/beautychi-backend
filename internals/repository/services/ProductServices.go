@@ -154,3 +154,31 @@ func (ps *ProductServices) UpdateProductImagesService(productID int, productImag
 
 	return nil
 }
+
+func (ps *ProductServices) OneProductByIDReviewsService(limit, offset, productID int) ([]*models.ProductReview, error) {
+	productReviews, err := ps.PostgresDBRepo.OneProductByIDAllReviews(limit, offset, productID)
+	if err != nil {
+		return nil, err
+	}
+
+	return productReviews, nil
+}
+
+func (ps *ProductServices) InsertProductReviewService(productID int, review models.ProductReview) error {
+	err := validation.ValidateStruct(&review,
+		validation.Field(&review.ProductID, validation.Required, validation.Min(0)),
+		validation.Field(&review.ReviewBody, validation.Required, validation.Length(1, 65000)),
+		validation.Field(&review.Rate, validation.Required, validation.Min(0), validation.Max(5)),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	err = ps.PostgresDBRepo.InsertProductReview(productID, review)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

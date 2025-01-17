@@ -27,6 +27,7 @@ async function f() {
     drop table if exists public.customer cascade;
 
     drop table if exists public.customer_address cascade;
+    drop table if exists public.product_review cascade;
 
     `)
 

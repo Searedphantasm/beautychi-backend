@@ -181,6 +181,64 @@ func (app *application) OneProductHandler(w http.ResponseWriter, r *http.Request
 	_ = app.writeJSON(w, http.StatusOK, product)
 }
 
+func (app *application) OneProductReviews(w http.ResponseWriter, r *http.Request) {
+	productId := chi.URLParam(r, "product_id")
+	productID, err := strconv.Atoi(productId)
+
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid product id"))
+		return
+	}
+
+	queryParams := r.URL.Query()
+
+	limit, err := strconv.Atoi(queryParams.Get("limit"))
+	if err != nil {
+		app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+	page, err := strconv.Atoi(queryParams.Get("page"))
+	if err != nil {
+		app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	offset := (page - 1) * limit
+
+	productReviews, err := app.Services.ProductServices.OneProductByIDReviewsService(limit, offset, productID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, productReviews)
+}
+
+func (app *application) CreateProductReview(w http.ResponseWriter, r *http.Request) {
+	productId := chi.URLParam(r, "product_id")
+	productID, err := strconv.Atoi(productId)
+
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid product id"))
+		return
+	}
+
+	var productReview models.ProductReview
+	err = app.readJSON(w, r, &productReview)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+	productReview.ProductID = productID
+	err = app.Services.ProductServices.InsertProductReviewService(productID, productReview)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusCreated, productReview)
+}
+
 func (app *application) CreateProductHandler(w http.ResponseWriter, r *http.Request) {
 	var product models.Product
 
@@ -189,7 +247,7 @@ func (app *application) CreateProductHandler(w http.ResponseWriter, r *http.Requ
 		app.errorJSON(w, err)
 		return
 	}
-	
+
 	err = app.Services.ProductServices.InsertProductService(product)
 	if err != nil {
 		app.errorJSON(w, err)

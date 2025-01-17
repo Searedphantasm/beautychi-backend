@@ -51,7 +51,7 @@ func (r *PostgresDBRepo) AllProducts(limit, offset int, optionalParams models.Op
 
 	// Base query
 	baseQuery := `
-    SELECT p.id, title, p.slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, coalesce(product_discount_price,0), sub_category_id, consumer_guide, contact, status,pc.slug as category_slug,pc.name,b.name,sc.name, p.created_at, p.updated_at 
+    SELECT p.id, title, p.slug, p.description, poster, poster_key, price,p.rate, category_id, brand_id, product_stock, coalesce(product_discount_price,0), sub_category_id, consumer_guide, contact, status,pc.slug as category_slug,pc.name,b.name,sc.name, p.created_at, p.updated_at 
     FROM product p 
     JOIN category pc ON p.category_id = pc.id 
     JOIN brand b ON p.brand_id = b.id 
@@ -119,6 +119,7 @@ func (r *PostgresDBRepo) AllProducts(limit, offset int, optionalParams models.Op
 			&pro.Poster,
 			&pro.PosterKey,
 			&pro.Price,
+			&pro.Rate,
 			&pro.CategoryID,
 			&pro.BrandID,
 			&pro.ProductStock,
@@ -363,11 +364,11 @@ func (r *PostgresDBRepo) ProductByIDOrSlug(params models.OneParams) (*models.Pro
 	var identifier any
 
 	if id == 0 && len(slug) > 0 {
-		query = `SELECT p.id, title, p.slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, product_discount_price, sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id WHERE p.slug = $1;`
+		query = `SELECT p.id, title, p.slug, p.description, poster, poster_key, price,rate, category_id, brand_id, product_stock, product_discount_price, sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id WHERE p.slug = $1;`
 
 		identifier = slug
 	} else if id != 0 {
-		query = `SELECT p.id, title, p.slug, p.description, poster, poster_key, price, category_id, brand_id, product_stock, product_discount_price, sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id WHERE p.id = $1;`
+		query = `SELECT p.id, title, p.slug, p.description, poster, poster_key, price,rate, category_id, brand_id, product_stock, product_discount_price, sub_category_id, consumer_guide, contact, status,pc.name,b.name,sc.name, p.created_at, p.updated_at FROM product p JOIN category pc on p.category_id = pc.id JOIN brand b on p.brand_id = b.id JOIN sub_category sc on p.sub_category_id = sc.id WHERE p.id = $1;`
 
 		identifier = id
 	}
@@ -383,6 +384,7 @@ func (r *PostgresDBRepo) ProductByIDOrSlug(params models.OneParams) (*models.Pro
 		&pro.Poster,
 		&pro.PosterKey,
 		&pro.Price,
+		&pro.Rate,
 		&pro.CategoryID,
 		&pro.BrandID,
 		&pro.ProductStock,
@@ -1167,4 +1169,59 @@ func (r *PostgresDBRepo) OneCustomerByID(id string) (*models.Customer, error) {
 
 	customer.Addresses = addresses
 	return &customer, nil
+}
+
+func (r *PostgresDBRepo) OneProductByIDAllReviews(limit, offset, productID int) ([]*models.ProductReview, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	var query string
+	//var conditions []string
+	//var conditionIndex int = 1
+
+	query = `SELECT pr.id, product_id, review_body,c.username, rate,accepted FROM product_review pr JOIN customer c on pr.customer_id = c.id WHERE product_id = $1 AND accepted = true LIMIT $2 OFFSET $3;`
+
+	rows, err := r.DB.QueryContext(ctx, query, productID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var productReviews []*models.ProductReview
+	for rows.Next() {
+		var productReview models.ProductReview
+		err := rows.Scan(
+			&productReview.ID,
+			&productReview.ProductID,
+			&productReview.ReviewBody,
+			&productReview.CustomerUsername,
+			&productReview.Rate,
+			&productReview.Accepted,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		productReviews = append(productReviews, &productReview)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return productReviews, nil
+}
+
+func (r *PostgresDBRepo) InsertProductReview(productID int, review models.ProductReview) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `INSERT INTO product_review (product_id, review_body, customer_id, rate) VALUES ($1, $2, $3, $4)`
+
+	_, err := r.DB.ExecContext(ctx, query, productID, review.ReviewBody, review.CustomerID, review.Rate)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

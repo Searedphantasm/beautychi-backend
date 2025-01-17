@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS product
     poster                 TEXT NOT NULL,
     poster_key             VARCHAR(255) NOT NULL,
     price                  INT          NOT NULL,
+    rate                   float NOT NULL DEFAULT 0,
     category_id            INT REFERENCES category (id) ON DELETE RESTRICT ,
     brand_id               INT REFERENCES brand (id) ON DELETE RESTRICT ,
     product_stock          INT          NOT NULL,
