@@ -37,6 +37,9 @@ type DatabaseRepo interface {
 
 	AllCustomers(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Customer, error)
 	OneCustomerByID(id string) (*models.Customer, error)
+
+	RegisterAdminUser(userInfo models.User) error
+	IsUserExist(username, phone string) (bool, error)
 }
 
 type ProductRepo interface {
@@ -80,4 +83,8 @@ type BrandRepo interface {
 type CustomerRepo interface {
 	AllCustomersService(limit, offset int, optionalParams models.OptionalQueryParams) ([]*models.Customer, error)
 	OneCustomerServiceByID(id string) (*models.Customer, error)
+}
+
+type UserRepo interface {
+	RegisterAdminUserService(userInfo models.User) error
 }

@@ -1,3 +1,5 @@
+
+
 CREATE TABLE IF NOT EXISTS category
 (
     id          SERIAL PRIMARY KEY,
@@ -44,10 +46,24 @@ $$
         IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'product_status') THEN
             CREATE TYPE product_status AS ENUM ('Active', 'Inactive');
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_permission_enum') THEN
+            CREATE TYPE user_permission_enum AS ENUM ('0', '1', '2');
+        END IF;
     END
 $$;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+
+CREATE TABLE IF NOT EXISTS admin_user
+(
+    id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(255) NOT NULL,
+    hashed_password VARCHAR(255) NOT NULL ,
+    permission user_permission_enum NOT NULL DEFAULT '0',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE IF NOT EXISTS product
 (
@@ -66,7 +82,7 @@ CREATE TABLE IF NOT EXISTS product
     sub_category_id        INT REFERENCES sub_category (id) ON DELETE RESTRICT,
     consumer_guide         TEXT,
     contact                VARCHAR(11),
-    status                 product_status,
+    status                 product_status default 'Active',
     created_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 

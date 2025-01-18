@@ -49,5 +49,8 @@ func (app *application) routes() http.Handler {
 	mux.Get("/api/customers", app.AllCustomersHandler)
 	mux.Get("/api/customers/{customer_id}", app.OneCustomerHandler)
 
+	// creating admin user
+	mux.Post("/api/register-admin", app.RegisterAdminUser)
+
 	return mux
 }

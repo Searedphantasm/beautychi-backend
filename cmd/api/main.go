@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 const port = 8080
@@ -21,9 +22,15 @@ type application struct {
 		BrandServices       repository.BrandRepo
 		SubCategoryServices repository.SubCategoryRepo
 		CustomerServices    repository.CustomerRepo
+		UserServices        repository.UserRepo
 	}
-	DSN    string
-	Domain string
+	DSN          string
+	Domain       string
+	JWTSecret    string
+	JWTIssuer    string
+	JWTAudience  string
+	CookieDomain string
+	auth         Auth
 }
 
 func main() {
@@ -37,6 +44,11 @@ func main() {
 	}
 
 	app.DSN = os.Getenv("DSN")
+	app.JWTSecret = os.Getenv("JWTSecret")
+	app.JWTIssuer = os.Getenv("JWTIssuer")
+	app.JWTAudience = os.Getenv("JWTAudience")
+	app.CookieDomain = os.Getenv("CookieDomain")
+	app.Domain = os.Getenv("Domain")
 
 	// connect to the database
 	conn, err := app.connectToDB()
@@ -44,8 +56,22 @@ func main() {
 		log.Fatal(err)
 	}
 
+	app.auth = Auth{
+		Issuer:        app.JWTIssuer,
+		Audience:      app.JWTAudience,
+		Secret:        app.JWTSecret,
+		TokenExpiry:   time.Minute * 15,
+		RefreshExpiry: time.Hour * 24,
+		CookiePath:    "/",
+		CookieName:    "refresh_token",
+		CookieDomain:  app.CookieDomain,
+	}
+
 	app.DB = &dbrepo.PostgresDBRepo{DB: conn}
 	app.Services.ProductServices = &services.ProductServices{
+		PostgresDBRepo: &dbrepo.PostgresDBRepo{DB: conn},
+	}
+	app.Services.UserServices = &services.UserService{
 		PostgresDBRepo: &dbrepo.PostgresDBRepo{DB: conn},
 	}
 	app.Services.CustomerServices = &services.CustomerServices{

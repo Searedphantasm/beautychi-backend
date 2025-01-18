@@ -11,6 +11,7 @@ import (
 func (app *application) AllProductsHandler(w http.ResponseWriter, r *http.Request) {
 
 	queryParams := r.URL.Query()
+	//test := r.Header.Get("Cookie")
 
 	limit, err := strconv.Atoi(queryParams.Get("limit"))
 	if err != nil {
@@ -529,4 +530,22 @@ func (app *application) OneCustomerHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	_ = app.writeJSON(w, http.StatusOK, customer)
+}
+
+func (app *application) RegisterAdminUser(w http.ResponseWriter, r *http.Request) {
+
+	var adminUser models.User
+	err := app.readJSON(w, r, &adminUser)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = app.Services.UserServices.RegisterAdminUserService(adminUser)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, map[string]string{"result": "success"})
 }
